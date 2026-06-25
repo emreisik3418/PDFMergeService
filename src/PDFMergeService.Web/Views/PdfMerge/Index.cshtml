@@ -1,0 +1,218 @@
+@model PDFMergeService.Web.ViewModels.PdfMerge.PdfMergeViewModel
+@{
+    ViewData["Title"] = "PDF Birleştir";
+}
+
+<div class="row g-4">
+    <!-- Sol Panel: Upload + Dosya Listesi -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold text-primary">
+                    <i class="bi bi-files me-2"></i>PDF Dosyaları
+                </h5>
+            </div>
+            <div class="card-body p-4">
+
+                <!-- Drop Zone -->
+                <div id="dropZone"
+                     class="border border-2 border-dashed rounded-3 text-center p-5 mb-4"
+                     style="border-color:#0d6efd !important; cursor:pointer; transition: background 0.2s;">
+                    <i class="bi bi-cloud-arrow-up display-4 text-primary mb-3 d-block"></i>
+                    <p class="fs-5 fw-medium mb-1">PDF dosyalarını buraya sürükleyin</p>
+                    <p class="text-muted mb-3">veya</p>
+                    <button type="button" class="btn btn-primary px-4" id="browseBtn">
+                        <i class="bi bi-folder2-open me-2"></i>Dosya Seç
+                    </button>
+                    <input type="file" id="fileInput" multiple accept=".pdf" class="d-none" />
+                    <p class="text-muted mt-3 mb-0 small">Maks. 50 MB/dosya &bull; En fazla 20 dosya &bull; Sadece PDF</p>
+                </div>
+
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="d-none mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">Yükleniyor...</small>
+                        <small id="uploadPercent" class="text-primary fw-semibold">0%</small>
+                    </div>
+                    <div class="progress" style="height:6px;">
+                        <div id="uploadBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Dosya Listesi -->
+                <div id="fileListSection" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold text-secondary">
+                            <i class="bi bi-list-ul me-1"></i>Yüklenen Dosyalar
+                            <span id="fileCount" class="badge bg-primary ms-1">0</span>
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="clearAllBtn">
+                            <i class="bi bi-trash me-1"></i>Tümünü Temizle
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40" class="text-center">#</th>
+                                    <th>Dosya Adı</th>
+                                    <th width="80" class="text-center">Sayfa</th>
+                                    <th width="90" class="text-center">Boyut</th>
+                                    <th width="60" class="text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="fileList">
+                                <!-- JS tarafından doldurulur -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">
+                        <i class="bi bi-grip-vertical me-1"></i>Satırları sürükleyerek sırayı değiştirebilirsiniz.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Sağ Panel: Ayarlar + Merge Butonu -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold text-primary">
+                    <i class="bi bi-sliders me-2"></i>Footer Ayarları
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="footerAccordion">
+
+                    <!-- Sayfa Numarası -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapsePageNumber">
+                                <i class="bi bi-123 me-2 text-primary"></i>Sayfa Numarası
+                            </button>
+                        </h2>
+                        <div id="collapsePageNumber" class="accordion-collapse collapse show"
+                             data-bs-parent="#footerAccordion">
+                            <div class="accordion-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="pageNumberEnabled" checked />
+                                    <label class="form-check-label fw-medium" for="pageNumberEnabled">Sayfa numarasını ekle</label>
+                                </div>
+                                <div id="pageNumberOptions">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Başlangıç Sayfası</label>
+                                            <input type="number" class="form-control form-control-sm" id="startFromPage"
+                                                   value="2" min="1" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Yazı Boyutu</label>
+                                            <input type="number" class="form-control form-control-sm" id="fontSize"
+                                                   value="10" min="6" max="24" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Konum</label>
+                                        <select class="form-select form-select-sm" id="pageNumberPosition">
+                                            <option value="0" selected>Sol Alt</option>
+                                            <option value="1">Orta Alt</option>
+                                            <option value="2">Sağ Alt</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label small text-muted">Yazı Rengi</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color"
+                                               id="fontColor" value="#ff0000" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logo -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseLogo">
+                                <i class="bi bi-image me-2 text-primary"></i>Logo
+                            </button>
+                        </h2>
+                        <div id="collapseLogo" class="accordion-collapse collapse"
+                             data-bs-parent="#footerAccordion">
+                            <div class="accordion-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="logoEnabled" checked />
+                                    <label class="form-check-label fw-medium" for="logoEnabled">Logo ekle</label>
+                                </div>
+                                <div id="logoOptions">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Özel Logo (PNG/JPG)</label>
+                                        <input type="file" class="form-control form-control-sm" id="customLogoFile"
+                                               accept=".png,.jpg,.jpeg" />
+                                        <div class="form-text">Boş bırakılırsa varsayılan logo kullanılır.</div>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Genişlik (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="logoWidth"
+                                                   value="80" min="20" max="300" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Yükseklik (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="logoHeight"
+                                                   value="30" min="10" max="150" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Konum</label>
+                                        <select class="form-select form-select-sm" id="logoPosition">
+                                            <option value="0">Sol Alt</option>
+                                            <option value="1">Orta Alt</option>
+                                            <option value="2" selected>Sağ Alt</option>
+                                        </select>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Alt Boşluk (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="marginBottom"
+                                                   value="10" min="0" max="60" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Yan Boşluk (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="marginHorizontal"
+                                                   value="15" min="0" max="60" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Merge Butonu -->
+        <button type="button" id="mergeBtn"
+                class="btn btn-success btn-lg w-100 shadow-sm" disabled>
+            <span id="mergeBtnNormal">
+                <i class="bi bi-arrow-down-circle-fill me-2"></i>PDF'leri Birleştir
+            </span>
+            <span id="mergeBtnLoading" class="d-none">
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>Birleştiriliyor...
+            </span>
+        </button>
+        <p class="text-muted text-center small mt-2">
+            <i class="bi bi-lock-fill me-1"></i>Dosyalarınız işlem sonrası sunucudan silinir.
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pdf-merge.js" asp-append-version="true"></script>
+}

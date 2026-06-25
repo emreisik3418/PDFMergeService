@@ -1,0 +1,216 @@
+@{
+    ViewData["Title"] = "Klasör Birleştirme";
+}
+
+<div class="row g-4">
+    <!-- Sol Panel: Klasör Tarama + Önizleme -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold text-primary">
+                    <i class="bi bi-folder2-open me-2"></i>Ana Klasör Seçimi
+                </h5>
+            </div>
+            <div class="card-body p-4">
+
+                <!-- Yol Girişi -->
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-folder text-primary"></i>
+                    </span>
+                    <input type="text" id="rootPath" class="form-control"
+                           placeholder="Örnek: C:\Setler" />
+                    <button class="btn btn-primary px-4" id="scanBtn">
+                        <i class="bi bi-search me-2"></i>Tara
+                    </button>
+                </div>
+                <p class="text-muted small mb-4">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Girdiğiniz klasörün altındaki her alt klasördeki PDF'ler ayrı ayrı birleştirilir.
+                    Alt klasör adı çıktı dosyasının adı olur.
+                </p>
+
+                <!-- Tarama Spinner -->
+                <div id="scanSpinner" class="text-center py-4 d-none">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-muted mt-2 mb-0">Klasörler taranıyor...</p>
+                </div>
+
+                <!-- Klasör Listesi -->
+                <div id="folderListSection" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold text-secondary">
+                            <i class="bi bi-diagram-3 me-1"></i>Bulunan Klasörler
+                            <span id="folderCount" class="badge bg-primary ms-1">0</span>
+                        </span>
+                        <span id="totalPdfBadge" class="text-muted small"></span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40" class="text-center">#</th>
+                                    <th>Klasör Adı</th>
+                                    <th width="80" class="text-center">PDF</th>
+                                    <th width="50" class="text-center">
+                                        <input type="checkbox" id="selectAll" class="form-check-input" checked title="Tümünü Seç" />
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="folderList"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Dosya Detay Accordion -->
+                    <div class="accordion accordion-flush mt-3" id="filePreviewAccordion"></div>
+                </div>
+
+                <!-- Boş Durum -->
+                <div id="emptyState" class="text-center py-5 text-muted d-none">
+                    <i class="bi bi-folder-x display-5 mb-3 d-block"></i>
+                    <p class="mb-0">Bu klasörde PDF içeren alt klasör bulunamadı.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Sağ Panel: Footer Ayarları + Merge -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold text-primary">
+                    <i class="bi bi-sliders me-2"></i>Footer Ayarları
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="footerAccordion2">
+
+                    <!-- Sayfa Numarası -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapsePN2">
+                                <i class="bi bi-123 me-2 text-primary"></i>Sayfa Numarası
+                            </button>
+                        </h2>
+                        <div id="collapsePN2" class="accordion-collapse collapse show">
+                            <div class="accordion-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="f_pageNumberEnabled" checked />
+                                    <label class="form-check-label fw-medium" for="f_pageNumberEnabled">Sayfa numarasını ekle</label>
+                                </div>
+                                <div id="f_pageNumberOptions">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Başlangıç Sayfası</label>
+                                            <input type="number" class="form-control form-control-sm" id="f_startFromPage" value="2" min="1" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Yazı Boyutu</label>
+                                            <input type="number" class="form-control form-control-sm" id="f_fontSize" value="10" min="6" max="24" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Konum</label>
+                                        <select class="form-select form-select-sm" id="f_pageNumberPosition">
+                                            <option value="0" selected>Sol Alt</option>
+                                            <option value="1">Orta Alt</option>
+                                            <option value="2">Sağ Alt</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label small text-muted">Yazı Rengi</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color"
+                                               id="f_fontColor" value="#ff0000" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logo -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseLogo2">
+                                <i class="bi bi-image me-2 text-primary"></i>Logo
+                            </button>
+                        </h2>
+                        <div id="collapseLogo2" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="f_logoEnabled" checked />
+                                    <label class="form-check-label fw-medium" for="f_logoEnabled">Logo ekle</label>
+                                </div>
+                                <div id="f_logoOptions">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Genişlik (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="f_logoWidth" value="80" min="20" max="300" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Yükseklik (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="f_logoHeight" value="30" min="10" max="150" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Konum</label>
+                                        <select class="form-select form-select-sm" id="f_logoPosition">
+                                            <option value="0">Sol Alt</option>
+                                            <option value="1">Orta Alt</option>
+                                            <option value="2" selected>Sağ Alt</option>
+                                        </select>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Alt Boşluk (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="f_marginBottom" value="10" min="0" max="60" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small text-muted">Yan Boşluk (pt)</label>
+                                            <input type="number" class="form-control form-control-sm" id="f_marginHorizontal" value="15" min="0" max="60" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Merge Butonu -->
+        <button type="button" id="mergeAllBtn" class="btn btn-success btn-lg w-100 shadow-sm" disabled>
+            <span id="mergeAllBtnNormal">
+                <i class="bi bi-arrow-down-circle-fill me-2"></i>Tümünü Birleştir &amp; İndir
+            </span>
+            <span id="mergeAllBtnLoading" class="d-none">
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Birleştiriliyor...
+            </span>
+        </button>
+
+        <!-- İlerleme -->
+        <div id="mergeProgress" class="d-none mt-3">
+            <div class="d-flex justify-content-between mb-1">
+                <small id="mergeProgressLabel" class="text-muted">Hazırlanıyor...</small>
+                <small id="mergeProgressPercent" class="text-primary fw-semibold">0%</small>
+            </div>
+            <div class="progress" style="height:6px;">
+                <div id="mergeProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                     role="progressbar" style="width:0%"></div>
+            </div>
+        </div>
+
+        <p class="text-muted text-center small mt-2">
+            <i class="bi bi-file-zip me-1"></i>Birleştirilmiş PDF'ler ZIP olarak indirilir.
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/folder-merge.js" asp-append-version="true"></script>
+}

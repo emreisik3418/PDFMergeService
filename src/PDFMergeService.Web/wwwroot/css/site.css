@@ -1,0 +1,60 @@
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html { font-size: 16px; }
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+/* Drop zone */
+#dropZone:hover,
+#dropZone.drag-over {
+    background-color: #f0f7ff !important;
+}
+
+/* Sortable ghost row */
+.table-primary {
+    opacity: 0.5;
+}
+
+/* File list row cursor */
+#fileList tr {
+    cursor: grab;
+}
+
+#fileList tr:active {
+    cursor: grabbing;
+}
+
+/* Accordion active color */
+.accordion-button:not(.collapsed) {
+    color: #0d6efd;
+    background-color: #f0f7ff;
+}
+
+/* Color input */
+.form-control-color {
+    width: 60px;
+    height: 32px;
+    padding: 2px 4px;
+}
+
+/* Card radius */
+.card {
+    border-radius: 12px;
+}
+
+/* Merge button */
+#mergeBtn {
+    border-radius: 10px;
+    font-size: 1.05rem;
+}
+
+/* Focus ring */
+.btn:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}

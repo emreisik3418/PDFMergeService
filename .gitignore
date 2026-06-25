@@ -1,0 +1,45 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.userprefs
+
+## Rider / JetBrains
+.idea/
+
+## ASP.NET
+**/wwwroot/lib/
+**/wwwroot/temp/*.pdf
+**/wwwroot/temp/*.png
+**/wwwroot/temp/*.jpg
+
+## Build output
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+!**/packages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Logs
+*.log
+logs/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## User secrets
+**/secrets.json
+appsettings.Development.json
