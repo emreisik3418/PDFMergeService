@@ -123,6 +123,7 @@ function renderFolderList() {
     folderCount.textContent = scannedFolders.length;
     totalPdfBadge.textContent = `Toplam ${totalPdf} PDF`;
     mergeAllBtn.disabled = false;
+    document.getElementById('f_detectLogoBtn').disabled = false;
 
     // checkbox events
     document.querySelectorAll('.folder-check').forEach(cb => {
@@ -226,6 +227,55 @@ function showMergeProgress(show, label = '', percent = 0) {
         mergeProgressBar.style.width = percent + '%';
         mergeProgressPercent.textContent = percent + '%';
     }
+}
+
+// ─── Logo Detection ───────────────────────────────────────────────────────────
+document.getElementById('f_detectLogoBtn').addEventListener('click', async () => {
+    const checks = [...document.querySelectorAll('.folder-check')];
+    const selected = scannedFolders.filter((_, i) => checks[i]?.checked);
+
+    if (selected.length === 0) { showToast('En az bir klasör seçin.', 'warning'); return; }
+
+    setFolderDetecting(true);
+
+    const payload = {
+        folders: selected.map(f => ({
+            folderName: f.folderName,
+            folderPath: f.folderPath,
+            pdfFiles: f.pdfFiles
+        }))
+    };
+
+    try {
+        const res = await fetch('/folder-merge/detect-logo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) { showToast('Tespit başarısız.', 'danger'); return; }
+
+        const data = await res.json();
+        document.getElementById('f_logoSkipPages').value = data.logoPages.join(', ');
+
+        if (data.logoPages.length > 0) {
+            showToast(`${data.checkedFiles} dosyada tarandı — ${data.logoPages.length} sayfada logo bulundu, alan güncellendi.`, 'success');
+        } else {
+            showToast(`${data.checkedFiles} dosya tarandı, logo tespit edilemedi.`, 'info');
+        }
+    } catch {
+        showToast('Sunucu bağlantısı hatası.', 'danger');
+    } finally {
+        setFolderDetecting(false);
+    }
+});
+
+function setFolderDetecting(loading) {
+    const btn = document.getElementById('f_detectLogoBtn');
+    btn.disabled = loading;
+    btn.innerHTML = loading
+        ? '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Taranıyor...'
+        : '<i class="bi bi-search me-1"></i>Klasörlerde Logo Tespit Et';
 }
 
 // ─── Footer Settings ──────────────────────────────────────────────────────────

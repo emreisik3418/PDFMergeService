@@ -12,17 +12,20 @@ public class FolderMergeController : Controller
     private readonly IFolderScanService _folderScanService;
     private readonly IPdfMergeService _pdfMergeService;
     private readonly IPdfFooterService _pdfFooterService;
+    private readonly IPdfLogoDetectionService _logoDetectionService;
     private readonly ILogger<FolderMergeController> _logger;
 
     public FolderMergeController(
         IFolderScanService folderScanService,
         IPdfMergeService pdfMergeService,
         IPdfFooterService pdfFooterService,
+        IPdfLogoDetectionService logoDetectionService,
         ILogger<FolderMergeController> logger)
     {
         _folderScanService = folderScanService;
         _pdfMergeService = pdfMergeService;
         _pdfFooterService = pdfFooterService;
+        _logoDetectionService = logoDetectionService;
         _logger = logger;
     }
 
@@ -108,6 +111,41 @@ public class FolderMergeController : Controller
         zipStream.Position = 0;
         var zipName = $"TopluBirlestirme_{today}.zip";
         return File(zipStream.ToArray(), "application/zip", zipName);
+    }
+
+    [HttpPost("/folder-merge/detect-logo")]
+    public async Task<IActionResult> DetectLogo([FromBody] DetectLogoInFoldersViewModel model)
+    {
+        if (model.Folders == null || model.Folders.Count == 0)
+            return Ok(new { logoPages = Array.Empty<int>(), checkedFiles = 0 });
+
+        var allPages = new HashSet<int>();
+        int checkedFiles = 0;
+
+        foreach (var folder in model.Folders)
+        {
+            if (folder.PdfFiles == null) continue;
+
+            int cumulative = 0;
+            foreach (var fileName in folder.PdfFiles)
+            {
+                var filePath = Path.Combine(folder.FolderPath, fileName);
+                if (!System.IO.File.Exists(filePath)) continue;
+
+                var result = await _logoDetectionService.DetectLogoPagesAsync(filePath);
+                foreach (var p in result.LogoPages)
+                    allPages.Add(p + cumulative);
+
+                cumulative += result.TotalPages;
+                checkedFiles++;
+            }
+        }
+
+        return Ok(new
+        {
+            logoPages = allPages.OrderBy(p => p).ToList(),
+            checkedFiles
+        });
     }
 
     private static FooterSettings MapFooterSettings(FooterSettingsViewModel vm) => new()

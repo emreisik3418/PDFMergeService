@@ -12,6 +12,7 @@ public class PdfMergeController : Controller
     private readonly IPdfInfoService _pdfInfoService;
     private readonly IPdfMergeService _pdfMergeService;
     private readonly IPdfFooterService _pdfFooterService;
+    private readonly IPdfLogoDetectionService _logoDetectionService;
     private readonly ILogger<PdfMergeController> _logger;
 
     public PdfMergeController(
@@ -19,12 +20,14 @@ public class PdfMergeController : Controller
         IPdfInfoService pdfInfoService,
         IPdfMergeService pdfMergeService,
         IPdfFooterService pdfFooterService,
+        IPdfLogoDetectionService logoDetectionService,
         ILogger<PdfMergeController> logger)
     {
         _validationService = validationService;
         _pdfInfoService = pdfInfoService;
         _pdfMergeService = pdfMergeService;
         _pdfFooterService = pdfFooterService;
+        _logoDetectionService = logoDetectionService;
         _logger = logger;
     }
 
@@ -86,6 +89,37 @@ public class PdfMergeController : Controller
 
         var fileName = $"merged_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
         return File(finalBytes, "application/pdf", fileName);
+    }
+
+    [HttpPost("/detect-logo")]
+    public async Task<IActionResult> DetectLogo([FromBody] DetectLogoRequestViewModel model)
+    {
+        if (model.Files == null || model.Files.Count == 0)
+            return Ok(new { logoPages = Array.Empty<int>(), checkedFiles = 0 });
+
+        var logoPages = new List<int>();
+        int cumulativePage = 0;
+        int checkedFiles = 0;
+
+        foreach (var file in model.Files.OrderBy(f => f.Order))
+        {
+            if (!System.IO.File.Exists(file.TempFilePath))
+            {
+                cumulativePage += file.PageCount;
+                continue;
+            }
+
+            var result = await _logoDetectionService.DetectLogoPagesAsync(file.TempFilePath, model.CustomLogoPath);
+            logoPages.AddRange(result.LogoPages.Select(p => p + cumulativePage));
+            cumulativePage += file.PageCount;
+            checkedFiles++;
+        }
+
+        return Ok(new
+        {
+            logoPages = logoPages.Distinct().OrderBy(p => p).ToList(),
+            checkedFiles
+        });
     }
 
     [HttpPost("/upload-logo")]

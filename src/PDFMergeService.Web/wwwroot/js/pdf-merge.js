@@ -172,6 +172,58 @@ clearAllBtn.addEventListener('click', () => {
     showToast('Tüm dosyalar temizlendi.', 'info');
 });
 
+// ─── Logo Detection ───────────────────────────────────────────────────────────
+document.getElementById('detectLogoBtn').addEventListener('click', async () => {
+    if (uploadedFiles.length === 0) {
+        showToast('Önce dosya yükleyin.', 'warning');
+        return;
+    }
+
+    setDetecting(true);
+
+    const payload = {
+        files: uploadedFiles.map((f, i) => ({
+            fileName: f.fileName,
+            tempFilePath: f.tempFilePath,
+            pageCount: f.pageCount,
+            fileSize: f.fileSize,
+            order: i
+        })),
+        customLogoPath: customLogoPath
+    };
+
+    try {
+        const res = await fetch('/detect-logo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) { showToast('Tespit başarısız.', 'danger'); return; }
+
+        const data = await res.json();
+        document.getElementById('logoSkipPages').value = data.logoPages.join(', ');
+
+        if (data.logoPages.length > 0) {
+            showToast(`${data.checkedFiles} dosyada tarandı — ${data.logoPages.length} sayfada logo bulundu, alan güncellendi.`, 'success');
+        } else {
+            showToast(`${data.checkedFiles} dosya tarandı, logo tespit edilemedi.`, 'info');
+        }
+    } catch {
+        showToast('Sunucu bağlantısı hatası.', 'danger');
+    } finally {
+        setDetecting(false);
+    }
+});
+
+function setDetecting(loading) {
+    const btn = document.getElementById('detectLogoBtn');
+    btn.disabled = loading;
+    btn.innerHTML = loading
+        ? '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Taranıyor...'
+        : '<i class="bi bi-search me-1"></i>Yüklenen Dosyalarda Logo Tespit Et';
+}
+
 // ─── Footer Toggle ────────────────────────────────────────────────────────────
 pageNumberEnabled.addEventListener('change', () => {
     pageNumberOptions.style.opacity = pageNumberEnabled.checked ? '1' : '0.4';
