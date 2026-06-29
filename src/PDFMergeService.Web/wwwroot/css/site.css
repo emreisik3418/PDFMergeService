@@ -10,10 +10,68 @@ body {
     margin-bottom: 60px;
 }
 
-/* Drop zone */
+/* ── Brand palette: primary = #dc0005 ───────────────────────── */
+:root {
+    --bs-primary:                #dc0005;
+    --bs-primary-rgb:            220, 0, 5;
+    --bs-primary-bg-subtle:      #fff0f0;
+    --bs-primary-border-subtle:  #f5a0a2;
+    --bs-primary-text-emphasis:  #7a0002;
+    --bs-link-color:             #dc0005;
+    --bs-link-color-rgb:         220, 0, 5;
+    --bs-link-hover-color:       #a80003;
+    --bs-link-hover-color-rgb:   168, 0, 3;
+}
+
+/* btn-primary */
+.btn-primary {
+    --bs-btn-color:               #fff;
+    --bs-btn-bg:                  #dc0005;
+    --bs-btn-border-color:        #dc0005;
+    --bs-btn-hover-color:         #fff;
+    --bs-btn-hover-bg:            #c60004;
+    --bs-btn-hover-border-color:  #bc0004;
+    --bs-btn-focus-shadow-rgb:    220, 0, 5;
+    --bs-btn-active-color:        #fff;
+    --bs-btn-active-bg:           #b00003;
+    --bs-btn-active-border-color: #a50003;
+    --bs-btn-disabled-color:      #fff;
+    --bs-btn-disabled-bg:         #dc0005;
+    --bs-btn-disabled-border-color:#dc0005;
+}
+
+/* btn-outline-primary */
+.btn-outline-primary {
+    --bs-btn-color:               #dc0005;
+    --bs-btn-border-color:        #dc0005;
+    --bs-btn-hover-color:         #fff;
+    --bs-btn-hover-bg:            #dc0005;
+    --bs-btn-hover-border-color:  #dc0005;
+    --bs-btn-focus-shadow-rgb:    220, 0, 5;
+    --bs-btn-active-color:        #fff;
+    --bs-btn-active-bg:           #dc0005;
+    --bs-btn-active-border-color: #dc0005;
+    --bs-btn-disabled-color:      #dc0005;
+    --bs-btn-disabled-bg:         transparent;
+    --bs-btn-disabled-border-color:#dc0005;
+    --bs-gradient:                none;
+}
+
+/* form-check / form-switch checked state (Bootstrap hardcodes blue) */
+.form-check-input:checked {
+    background-color: #dc0005;
+    border-color:     #dc0005;
+}
+
+/* progress bar (Bootstrap hardcodes blue in --bs-progress-bar-bg) */
+.progress {
+    --bs-progress-bar-bg: #dc0005;
+}
+
+/* ── Drop zone ───────────────────────────────────────────────── */
 #dropZone:hover,
 #dropZone.drag-over {
-    background-color: #f0f7ff !important;
+    background-color: #fff0f0 !important;
 }
 
 /* Sortable ghost row */
@@ -32,8 +90,13 @@ body {
 
 /* Accordion active color */
 .accordion-button:not(.collapsed) {
-    color: #0d6efd;
-    background-color: #f0f7ff;
+    color:            #dc0005;
+    background-color: #fff0f0;
+    box-shadow:       inset 0 -1px 0 rgba(220, 0, 5, .15);
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(220, 0, 5, .2);
 }
 
 /* Color input */
@@ -48,13 +111,17 @@ body {
     border-radius: 12px;
 }
 
-/* Merge button */
-#mergeBtn {
+/* Merge / action buttons */
+#mergeBtn,
+#mergeAllBtn {
     border-radius: 10px;
     font-size: 1.05rem;
 }
 
 /* Focus ring */
-.btn:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem #fff, 0 0 0 0.25rem rgba(220, 0, 5, .35);
 }
