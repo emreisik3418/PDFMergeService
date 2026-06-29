@@ -17,4 +17,5 @@ public class FooterSettings
     public double LogoHeight { get; set; } = 30;
     public double MarginBottom { get; set; } = 10;
     public double MarginHorizontal { get; set; } = 15;
+    public List<int> LogoSkipPages { get; set; } = new();
 }

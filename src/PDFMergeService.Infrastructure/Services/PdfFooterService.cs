@@ -58,7 +58,7 @@ public class PdfFooterService : IPdfFooterService
                 DrawPageNumber(gfx, page, settings, displayNumber);
             }
 
-            if (settings.LogoEnabled && logoImage != null)
+            if (settings.LogoEnabled && logoImage != null && !settings.LogoSkipPages.Contains(pageNumber))
                 DrawLogo(gfx, page, settings, logoImage);
         }
 

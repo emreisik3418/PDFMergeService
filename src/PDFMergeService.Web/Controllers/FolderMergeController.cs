@@ -123,7 +123,8 @@ public class FolderMergeController : Controller
         LogoWidth = vm.LogoWidth,
         LogoHeight = vm.LogoHeight,
         MarginBottom = vm.MarginBottom,
-        MarginHorizontal = vm.MarginHorizontal
+        MarginHorizontal = vm.MarginHorizontal,
+        LogoSkipPages = vm.LogoSkipPages
     };
 
     private static string SanitizeFileName(string name)

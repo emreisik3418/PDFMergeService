@@ -254,8 +254,27 @@ function collectFooterSettings() {
         logoWidth: parseFloat(document.getElementById('f_logoWidth').value),
         logoHeight: parseFloat(document.getElementById('f_logoHeight').value),
         marginBottom: parseFloat(document.getElementById('f_marginBottom').value),
-        marginHorizontal: parseFloat(document.getElementById('f_marginHorizontal').value)
+        marginHorizontal: parseFloat(document.getElementById('f_marginHorizontal').value),
+        logoSkipPages: parsePageRanges(document.getElementById('f_logoSkipPages').value)
     };
+}
+
+function parsePageRanges(input) {
+    if (!input || !input.trim()) return [];
+    const pages = new Set();
+    input.split(',').forEach(part => {
+        part = part.trim();
+        if (part.includes('-')) {
+            const [a, b] = part.split('-').map(n => parseInt(n.trim(), 10));
+            if (!isNaN(a) && !isNaN(b) && a <= b) {
+                for (let i = a; i <= b; i++) pages.add(i);
+            }
+        } else {
+            const n = parseInt(part, 10);
+            if (!isNaN(n) && n > 0) pages.add(n);
+        }
+    });
+    return [...pages].sort((a, b) => a - b);
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────

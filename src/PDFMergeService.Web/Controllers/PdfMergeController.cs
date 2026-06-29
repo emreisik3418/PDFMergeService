@@ -120,7 +120,8 @@ public class PdfMergeController : Controller
         LogoWidth = vm.LogoWidth,
         LogoHeight = vm.LogoHeight,
         MarginBottom = vm.MarginBottom,
-        MarginHorizontal = vm.MarginHorizontal
+        MarginHorizontal = vm.MarginHorizontal,
+        LogoSkipPages = vm.LogoSkipPages
     };
 
     private void CleanupTempFiles(List<PdfFileInfo> files)

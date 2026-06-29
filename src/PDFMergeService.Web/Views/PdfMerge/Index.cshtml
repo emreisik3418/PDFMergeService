@@ -17,7 +17,7 @@
                 <!-- Drop Zone -->
                 <div id="dropZone"
                      class="border border-2 border-dashed rounded-3 text-center p-5 mb-4"
-                     style="border-color:#0d6efd !important; cursor:pointer; transition: background 0.2s;">
+                     style="border-color:var(--bs-primary) !important; cursor:pointer; transition: background 0.2s;">
                     <i class="bi bi-cloud-arrow-up display-4 text-primary mb-3 d-block"></i>
                     <p class="fs-5 fw-medium mb-1">PDF dosyalarını buraya sürükleyin</p>
                     <p class="text-muted mb-3">veya</p>
@@ -176,7 +176,7 @@
                                             <option value="2" selected>Sağ Alt</option>
                                         </select>
                                     </div>
-                                    <div class="row g-2">
+                                    <div class="row g-2 mb-2">
                                         <div class="col-6">
                                             <label class="form-label small text-muted">Alt Boşluk (pt)</label>
                                             <input type="number" class="form-control form-control-sm" id="marginBottom"
@@ -187,6 +187,12 @@
                                             <input type="number" class="form-control form-control-sm" id="marginHorizontal"
                                                    value="15" min="0" max="60" />
                                         </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label small text-muted">Logo Eklenmeyecek Sayfalar</label>
+                                        <input type="text" class="form-control form-control-sm" id="logoSkipPages"
+                                               placeholder="Örn: 1, 3, 5-7" />
+                                        <div class="form-text">Virgülle ayırın veya aralık için tire kullanın. Boş bırakılırsa tüm sayfalara eklenir.</div>
                                     </div>
                                 </div>
                             </div>

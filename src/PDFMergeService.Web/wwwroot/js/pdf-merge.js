@@ -230,7 +230,8 @@ mergeBtn.addEventListener('click', async () => {
             logoWidth: parseFloat(document.getElementById('logoWidth').value),
             logoHeight: parseFloat(document.getElementById('logoHeight').value),
             marginBottom: parseFloat(document.getElementById('marginBottom').value),
-            marginHorizontal: parseFloat(document.getElementById('marginHorizontal').value)
+            marginHorizontal: parseFloat(document.getElementById('marginHorizontal').value),
+            logoSkipPages: parsePageRanges(document.getElementById('logoSkipPages').value)
         }
     };
 
@@ -298,4 +299,22 @@ function showToast(message, type = 'info') {
 
 function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function parsePageRanges(input) {
+    if (!input || !input.trim()) return [];
+    const pages = new Set();
+    input.split(',').forEach(part => {
+        part = part.trim();
+        if (part.includes('-')) {
+            const [a, b] = part.split('-').map(n => parseInt(n.trim(), 10));
+            if (!isNaN(a) && !isNaN(b) && a <= b) {
+                for (let i = a; i <= b; i++) pages.add(i);
+            }
+        } else {
+            const n = parseInt(part, 10);
+            if (!isNaN(n) && n > 0) pages.add(n);
+        }
+    });
+    return [...pages].sort((a, b) => a - b);
 }
