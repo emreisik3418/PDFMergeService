@@ -14,18 +14,31 @@
             <div class="card-body p-4">
 
                 <!-- Yol Girişi -->
-                <div class="input-group mb-3">
+                <div class="input-group mb-2">
                     <span class="input-group-text bg-white">
                         <i class="bi bi-folder text-primary"></i>
                     </span>
                     <input type="text" id="rootPath" class="form-control"
-                           placeholder="Örnek: C:\Setler" />
+                           placeholder="\\SunucuAdı\PaylaşımAdı\Klasör" />
                     <button class="btn btn-primary px-4" id="scanBtn">
                         <i class="bi bi-search me-2"></i>Tara
                     </button>
                 </div>
+
+                <div class="alert alert-info border-0 py-2 px-3 mb-3 small">
+                    <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>Klasör Yolu Hakkında</div>
+                    <div class="mb-1">
+                        <span class="text-muted">Sunucu üzerinden erişiyorsanız:</span>
+                        <code>C:\Setler\2024</code>
+                    </div>
+                    <div>
+                        <span class="text-muted">Ağ üzerinden erişiyorsanız (UNC yolu):</span>
+                        <code>\\SunucuAdı\PaylaşımAdı\Klasör</code>
+                    </div>
+                </div>
+
                 <p class="text-muted small mb-4">
-                    <i class="bi bi-info-circle me-1"></i>
+                    <i class="bi bi-diagram-3 me-1"></i>
                     Girdiğiniz klasörün altındaki her alt klasördeki PDF'ler ayrı ayrı birleştirilir.
                     Alt klasör adı çıktı dosyasının adı olur.
                 </p>

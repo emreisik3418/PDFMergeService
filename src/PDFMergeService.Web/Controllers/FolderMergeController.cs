@@ -38,9 +38,21 @@ public class FolderMergeController : Controller
         if (string.IsNullOrWhiteSpace(dto?.RootPath))
             return BadRequest(new { error = "Klasör yolu boş olamaz." });
 
+        var normalizedPath = dto.RootPath.Trim();
+
+        if (normalizedPath.Contains(".."))
+            return BadRequest(new { error = "Geçersiz klasör yolu." });
+
+        var remoteIp = HttpContext.Connection.RemoteIpAddress;
+        bool isRemoteRequest = remoteIp != null && !System.Net.IPAddress.IsLoopback(remoteIp);
+        bool isUncPath = normalizedPath.StartsWith(@"\\") || normalizedPath.StartsWith("//");
+
+        if (isRemoteRequest && !isUncPath)
+            return BadRequest(new { error = "Ağ üzerinden erişimde sunucu üzerindeki yerel yollar kullanılamaz. Lütfen UNC yolu kullanın. Örnek: \\\\SunucuAdı\\PaylaşımAdı\\Klasör" });
+
         try
         {
-            var folders = await _folderScanService.ScanAsync(dto.RootPath);
+            var folders = await _folderScanService.ScanAsync(normalizedPath);
 
             var result = folders.Select(f => new FolderInfoViewModel
             {
@@ -51,13 +63,20 @@ public class FolderMergeController : Controller
 
             return Ok(result);
         }
-        catch (DirectoryNotFoundException ex)
+        catch (DirectoryNotFoundException)
         {
-            return BadRequest(new { error = ex.Message });
+            var hint = isUncPath
+                ? "Klasör bulunamadı. UNC yolunun erişilebilir ve doğru yazıldığından emin olun."
+                : "Klasör bulunamadı. Yolu kontrol edin.";
+            return BadRequest(new { error = hint });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return BadRequest(new { error = "Bu klasöre erişim izniniz yok. Ağ paylaşım izinlerini kontrol edin." });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Klasör tarama hatası: {Path}", dto?.RootPath);
+            _logger.LogError(ex, "Klasör tarama hatası: {Path}", normalizedPath);
             return StatusCode(500, new { error = "Klasör tarama sırasında hata oluştu." });
         }
     }
