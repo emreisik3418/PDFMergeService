@@ -160,17 +160,34 @@ function initSortable() {
 }
 
 function removeFile(idx) {
-    uploadedFiles.splice(idx, 1);
+    const removed = uploadedFiles.splice(idx, 1);
+    cleanupServerFiles(removed.map(f => f.tempFilePath));
     uploadedFiles.forEach((f, i) => f.order = i);
     if (uploadedFiles.length === 0) window._sortableInit = false;
     renderFileList();
 }
 
 clearAllBtn.addEventListener('click', () => {
+    cleanupServerFiles(uploadedFiles.map(f => f.tempFilePath));
     uploadedFiles = [];
     window._sortableInit = false;
+    if (pendingDownload) {
+        URL.revokeObjectURL(pendingDownload.url);
+        pendingDownload = null;
+    }
+    showReopenBtn(false);
     renderFileList();
     showToast('Tüm dosyalar temizlendi.', 'info');
+});
+
+function cleanupServerFiles(paths) {
+    if (!paths || paths.length === 0) return;
+    navigator.sendBeacon('/cleanup', new Blob([JSON.stringify(paths)], { type: 'application/json' }));
+}
+
+window.addEventListener('beforeunload', () => {
+    if (uploadedFiles.length > 0)
+        cleanupServerFiles(uploadedFiles.map(f => f.tempFilePath));
 });
 
 // ─── Logo Detection ───────────────────────────────────────────────────────────
@@ -314,10 +331,7 @@ mergeBtn.addEventListener('click', async () => {
         new bootstrap.Modal(document.getElementById('previewModal')).show();
 
         showToast('PDF birleştirildi. Önizlemeyi inceleyip indirebilirsiniz.', 'success');
-        uploadedFiles = [];
-        customLogoPath = null;
-        window._sortableInit = false;
-        renderFileList();
+        showReopenBtn(true);
 
     } catch (e) {
         showToast('Sunucu bağlantısı hatası.', 'danger');
@@ -343,10 +357,16 @@ document.getElementById('downloadFromPreviewBtn').addEventListener('click', () =
 
 document.getElementById('previewModal').addEventListener('hidden.bs.modal', () => {
     document.getElementById('pdfPreviewFrame').src = '';
-    if (pendingDownload) {
-        URL.revokeObjectURL(pendingDownload.url);
-        pendingDownload = null;
-    }
+});
+
+function showReopenBtn(show) {
+    document.getElementById('reopenPreviewBtn').classList.toggle('d-none', !show);
+}
+
+document.getElementById('reopenPreviewBtn').addEventListener('click', () => {
+    if (!pendingDownload) return;
+    document.getElementById('pdfPreviewFrame').src = pendingDownload.url;
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
 });
 
 // ─── Toast ────────────────────────────────────────────────────────────────────

@@ -85,10 +85,16 @@ public class PdfMergeController : Controller
         byte[] mergedBytes = await _pdfMergeService.MergeAsync(request);
         byte[] finalBytes = await _pdfFooterService.ApplyFooterAsync(mergedBytes, request.Footer);
 
-        CleanupTempFiles(request.Files);
-
         var fileName = $"merged_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
         return File(finalBytes, "application/pdf", fileName);
+    }
+
+    [HttpPost("/cleanup")]
+    public IActionResult Cleanup([FromBody] List<string> filePaths)
+    {
+        if (filePaths == null) return Ok();
+        CleanupTempFiles(filePaths.Select(p => new PdfFileInfo { TempFilePath = p }).ToList());
+        return Ok();
     }
 
     [HttpPost("/detect-logo")]
