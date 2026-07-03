@@ -3,6 +3,7 @@
 // ─── State ───────────────────────────────────────────────────────────────────
 let uploadedFiles = [];   // { fileName, tempFilePath, pageCount, fileSize, fileSizeFormatted, order }
 let customLogoPath = null;
+let pendingDownload = null; // { url, fileName }
 
 // ─── DOM Refs ─────────────────────────────────────────────────────────────────
 const dropZone        = document.getElementById('dropZone');
@@ -303,13 +304,16 @@ mergeBtn.addEventListener('click', async () => {
 
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `merged_${new Date().toISOString().slice(0,10)}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const customName = document.getElementById('outputFileName').value.trim();
+        const fileName = customName ? `${customName}.pdf` : `merged_${new Date().toISOString().slice(0,10)}.pdf`;
 
-        showToast('PDF başarıyla birleştirildi ve indirildi!', 'success');
+        if (pendingDownload) URL.revokeObjectURL(pendingDownload.url);
+        pendingDownload = { url, fileName };
+
+        document.getElementById('pdfPreviewFrame').src = url;
+        new bootstrap.Modal(document.getElementById('previewModal')).show();
+
+        showToast('PDF birleştirildi. Önizlemeyi inceleyip indirebilirsiniz.', 'success');
         uploadedFiles = [];
         customLogoPath = null;
         window._sortableInit = false;
@@ -327,6 +331,23 @@ function setMerging(loading) {
     mergeBtnNormal.classList.toggle('d-none', loading);
     mergeBtnLoading.classList.toggle('d-none', !loading);
 }
+
+// ─── Preview Modal ────────────────────────────────────────────────────────────
+document.getElementById('downloadFromPreviewBtn').addEventListener('click', () => {
+    if (!pendingDownload) return;
+    const a = document.createElement('a');
+    a.href = pendingDownload.url;
+    a.download = pendingDownload.fileName;
+    a.click();
+});
+
+document.getElementById('previewModal').addEventListener('hidden.bs.modal', () => {
+    document.getElementById('pdfPreviewFrame').src = '';
+    if (pendingDownload) {
+        URL.revokeObjectURL(pendingDownload.url);
+        pendingDownload = null;
+    }
+});
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function showToast(message, type = 'info') {
