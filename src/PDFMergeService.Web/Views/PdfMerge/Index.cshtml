@@ -28,18 +28,6 @@
                     <p class="text-muted mt-3 mb-0 small">Maks. 50 MB/dosya &bull; En fazla 20 dosya &bull; Sadece PDF</p>
                 </div>
 
-                <!-- Upload Progress -->
-                <div id="uploadProgress" class="d-none mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <small class="text-muted">Yükleniyor...</small>
-                        <small id="uploadPercent" class="text-primary fw-semibold">0%</small>
-                    </div>
-                    <div class="progress" style="height:6px;">
-                        <div id="uploadBar" class="progress-bar progress-bar-striped progress-bar-animated"
-                             role="progressbar" style="width:0%"></div>
-                    </div>
-                </div>
-
                 <!-- Dosya Listesi -->
                 <div id="fileListSection" class="d-none">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -149,12 +137,6 @@
                                     <input class="form-check-input" type="checkbox" id="logoEnabled" checked />
                                     <label class="form-check-label fw-medium" for="logoEnabled">Logo ekle</label>
                                 </div>
-                                <div class="mb-3">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="detectLogoBtn">
-                                        <i class="bi bi-search me-1"></i>Yüklenen Dosyalarda Logo Tespit Et
-                                    </button>
-                                    <div class="form-text text-center">Logo bulunan sayfalar otomatik olarak atlanacak sayfalar alanına doldurulur.</div>
-                                </div>
                                 <div id="logoOptions">
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">Özel Logo (PNG/JPG)</label>
@@ -237,7 +219,7 @@
             <i class="bi bi-eye me-2"></i>Son Birleştirmeyi Önizle
         </button>
         <p class="text-muted text-center small mt-2">
-            <i class="bi bi-lock-fill me-1"></i>Dosyalarınız işlem sonrası sunucudan silinir.
+            <i class="bi bi-lock-fill me-1"></i>Dosyalarınız tarayıcınızdan hiç çıkmaz, sunucuya yüklenmez.
         </p>
     </div>
 </div>
@@ -268,5 +250,6 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/pdf-lib/pdf-lib.min.js"></script>
     <script src="~/js/pdf-merge.js" asp-append-version="true"></script>
 }

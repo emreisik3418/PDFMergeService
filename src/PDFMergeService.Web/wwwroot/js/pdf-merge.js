@@ -1,8 +1,15 @@
 'use strict';
 
+const { PDFDocument, StandardFonts, rgb } = PDFLib;
+
+// ─── Config (mirrors PdfSettings in appsettings.json) ─────────────────────────
+const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_COUNT = 20;
+
 // ─── State ───────────────────────────────────────────────────────────────────
-let uploadedFiles = [];   // { fileName, tempFilePath, pageCount, fileSize, fileSizeFormatted, order }
-let customLogoPath = null;
+let uploadedFiles = [];   // { fileName, bytes: Uint8Array, pageCount, fileSize, fileSizeFormatted, order }
+let customLogoBytes = null;
+let customLogoExt = null; // 'png' | 'jpg'
 let pendingDownload = null; // { url, fileName }
 
 // ─── DOM Refs ─────────────────────────────────────────────────────────────────
@@ -16,9 +23,6 @@ const clearAllBtn     = document.getElementById('clearAllBtn');
 const mergeBtn        = document.getElementById('mergeBtn');
 const mergeBtnNormal  = document.getElementById('mergeBtnNormal');
 const mergeBtnLoading = document.getElementById('mergeBtnLoading');
-const uploadProgress  = document.getElementById('uploadProgress');
-const uploadBar       = document.getElementById('uploadBar');
-const uploadPercent   = document.getElementById('uploadPercent');
 
 // Footer inputs
 const pageNumberEnabled   = document.getElementById('pageNumberEnabled');
@@ -41,64 +45,78 @@ dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('bg-primary-subtle');
     const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
-    if (files.length > 0) uploadFiles(files);
+    if (files.length > 0) addFiles(files);
     else showToast('Sadece PDF dosyası kabul edilir.', 'warning');
 });
 
 browseBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) uploadFiles([...fileInput.files]);
+    if (fileInput.files.length > 0) addFiles([...fileInput.files]);
     fileInput.value = '';
 });
 
-// ─── Upload ───────────────────────────────────────────────────────────────────
-async function uploadFiles(files) {
-    const formData = new FormData();
-    files.forEach(f => formData.append('files', f));
+// ─── Local File Loading (tamamen tarayıcıda, sunucuya gönderilmez) ────────────
+async function addFiles(files) {
+    const errors = [];
+    const accepted = [];
 
-    showUploadProgress(true);
-    animateProgress();
-
-    try {
-        const response = await fetch('/upload', { method: 'POST', body: formData });
-
-        showUploadProgress(false);
-
-        if (!response.ok) {
-            const err = await response.json();
-            showToast((err.errors || ['Yükleme başarısız.']).join('\n'), 'danger');
-            return;
-        }
-
-        const newFiles = await response.json();
-        newFiles.forEach(f => uploadedFiles.push(f));
-
-        uploadedFiles.sort((a, b) => a.fileName.localeCompare(b.fileName, 'tr', { sensitivity: 'base' }));
-        uploadedFiles.forEach((f, i) => f.order = i);
-
-        renderFileList();
-        showToast(`${newFiles.length} dosya başarıyla yüklendi.`, 'success');
-
-    } catch (e) {
-        showUploadProgress(false);
-        showToast('Sunucu bağlantısı hatası.', 'danger');
+    if (uploadedFiles.length + files.length > MAX_FILE_COUNT) {
+        showToast(`En fazla ${MAX_FILE_COUNT} dosya yükleyebilirsiniz.`, 'warning');
+        return;
     }
+
+    for (const file of files) {
+        const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+        if (ext !== '.pdf') {
+            errors.push(`'${file.name}' geçersiz dosya türü. Sadece PDF kabul edilir.`);
+            continue;
+        }
+        if (file.size === 0) {
+            errors.push(`'${file.name}' boş dosya.`);
+            continue;
+        }
+        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+            errors.push(`'${file.name}' dosyası ${MAX_FILE_SIZE_MB} MB limitini aşıyor.`);
+            continue;
+        }
+        accepted.push(file);
+    }
+
+    if (errors.length > 0) showToast(errors.join('\n'), 'danger');
+    if (accepted.length === 0) return;
+
+    const newFiles = [];
+    for (const file of accepted) {
+        try {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+            newFiles.push({
+                fileName: file.name,
+                bytes,
+                pageCount: doc.getPageCount(),
+                fileSize: file.size,
+                fileSizeFormatted: formatFileSize(file.size),
+                order: 0
+            });
+        } catch (e) {
+            showToast(`'${file.name}' okunamadı, geçerli bir PDF olmayabilir.`, 'danger');
+        }
+    }
+
+    if (newFiles.length === 0) return;
+
+    newFiles.forEach(f => uploadedFiles.push(f));
+    uploadedFiles.sort((a, b) => a.fileName.localeCompare(b.fileName, 'tr', { sensitivity: 'base' }));
+    uploadedFiles.forEach((f, i) => f.order = i);
+
+    renderFileList();
+    showToast(`${newFiles.length} dosya eklendi.`, 'success');
 }
 
-function showUploadProgress(show) {
-    uploadProgress.classList.toggle('d-none', !show);
-    if (show) { uploadBar.style.width = '0%'; uploadPercent.textContent = '0%'; }
-}
-
-function animateProgress() {
-    let p = 0;
-    const iv = setInterval(() => {
-        p = Math.min(p + Math.random() * 15, 90);
-        uploadBar.style.width = p + '%';
-        uploadPercent.textContent = Math.round(p) + '%';
-        if (!uploadProgress.classList.contains('d-none') === false) clearInterval(iv);
-    }, 200);
-    setTimeout(() => clearInterval(iv), 8000);
+function formatFileSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 // ─── File List Rendering ──────────────────────────────────────────────────────
@@ -160,15 +178,13 @@ function initSortable() {
 }
 
 function removeFile(idx) {
-    const removed = uploadedFiles.splice(idx, 1);
-    cleanupServerFiles(removed.map(f => f.tempFilePath));
+    uploadedFiles.splice(idx, 1);
     uploadedFiles.forEach((f, i) => f.order = i);
     if (uploadedFiles.length === 0) window._sortableInit = false;
     renderFileList();
 }
 
 clearAllBtn.addEventListener('click', () => {
-    cleanupServerFiles(uploadedFiles.map(f => f.tempFilePath));
     uploadedFiles = [];
     window._sortableInit = false;
     if (pendingDownload) {
@@ -179,68 +195,6 @@ clearAllBtn.addEventListener('click', () => {
     renderFileList();
     showToast('Tüm dosyalar temizlendi.', 'info');
 });
-
-function cleanupServerFiles(paths) {
-    if (!paths || paths.length === 0) return;
-    navigator.sendBeacon('/cleanup', new Blob([JSON.stringify(paths)], { type: 'application/json' }));
-}
-
-window.addEventListener('beforeunload', () => {
-    if (uploadedFiles.length > 0)
-        cleanupServerFiles(uploadedFiles.map(f => f.tempFilePath));
-});
-
-// ─── Logo Detection ───────────────────────────────────────────────────────────
-document.getElementById('detectLogoBtn').addEventListener('click', async () => {
-    if (uploadedFiles.length === 0) {
-        showToast('Önce dosya yükleyin.', 'warning');
-        return;
-    }
-
-    setDetecting(true);
-
-    const payload = {
-        files: uploadedFiles.map((f, i) => ({
-            fileName: f.fileName,
-            tempFilePath: f.tempFilePath,
-            pageCount: f.pageCount,
-            fileSize: f.fileSize,
-            order: i
-        })),
-        customLogoPath: customLogoPath
-    };
-
-    try {
-        const res = await fetch('/detect-logo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) { showToast('Tespit başarısız.', 'danger'); return; }
-
-        const data = await res.json();
-        document.getElementById('logoSkipPages').value = data.logoPages.join(', ');
-
-        if (data.logoPages.length > 0) {
-            showToast(`${data.checkedFiles} dosyada tarandı — ${data.logoPages.length} sayfada logo bulundu, alan güncellendi.`, 'success');
-        } else {
-            showToast(`${data.checkedFiles} dosya tarandı, logo tespit edilemedi.`, 'info');
-        }
-    } catch {
-        showToast('Sunucu bağlantısı hatası.', 'danger');
-    } finally {
-        setDetecting(false);
-    }
-});
-
-function setDetecting(loading) {
-    const btn = document.getElementById('detectLogoBtn');
-    btn.disabled = loading;
-    btn.innerHTML = loading
-        ? '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Taranıyor...'
-        : '<i class="bi bi-search me-1"></i>Yüklenen Dosyalarda Logo Tespit Et';
-}
 
 // ─── Footer Toggle ────────────────────────────────────────────────────────────
 pageNumberEnabled.addEventListener('change', () => {
@@ -253,24 +207,110 @@ logoEnabled.addEventListener('change', () => {
     logoOptions.style.pointerEvents = logoEnabled.checked ? 'auto' : 'none';
 });
 
-// ─── Custom Logo Upload ───────────────────────────────────────────────────────
+// ─── Custom Logo (tarayıcıda tutulur, sunucuya gönderilmez) ───────────────────
 customLogoFile.addEventListener('change', async () => {
-    if (!customLogoFile.files[0]) return;
-    const fd = new FormData();
-    fd.append('logo', customLogoFile.files[0]);
+    const file = customLogoFile.files[0];
+    if (!file) return;
+
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!['.png', '.jpg', '.jpeg'].includes(ext)) {
+        showToast('Sadece PNG veya JPEG logo kabul edilir.', 'warning');
+        customLogoFile.value = '';
+        return;
+    }
+
     try {
-        const res = await fetch('/upload-logo', { method: 'POST', body: fd });
-        if (res.ok) {
-            const data = await res.json();
-            customLogoPath = data.logoPath;
-            showToast('Özel logo yüklendi.', 'success');
-        } else {
-            showToast('Logo yüklenemedi.', 'warning');
-        }
-    } catch { showToast('Logo yükleme hatası.', 'danger'); }
+        customLogoBytes = new Uint8Array(await file.arrayBuffer());
+        customLogoExt = ext === '.png' ? 'png' : 'jpg';
+        showToast('Özel logo yüklendi.', 'success');
+    } catch {
+        showToast('Logo okunamadı.', 'danger');
+    }
 });
 
-// ─── Merge ────────────────────────────────────────────────────────────────────
+// ─── Footer Uygulama (PdfFooterService.cs mantığının pdf-lib karşılığı) ───────
+async function applyFooter(pdfDoc, settings) {
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    let logoImage = null;
+    if (settings.logoEnabled) {
+        try {
+            let bytes, ext;
+            if (customLogoBytes) {
+                bytes = customLogoBytes;
+                ext = customLogoExt;
+            } else {
+                const res = await fetch('/assets/logo/company-logo.png');
+                bytes = new Uint8Array(await res.arrayBuffer());
+                ext = 'png';
+            }
+            logoImage = ext === 'png' ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+        } catch (e) {
+            showToast('Logo yüklenemedi, footer logosuz oluşturulacak.', 'warning');
+        }
+    }
+
+    const pages = pdfDoc.getPages();
+    pages.forEach((page, pageIndex) => {
+        const pageNumber = pageIndex + 1;
+        const { width: pageW } = page.getSize();
+
+        if (settings.pageNumberEnabled && pageNumber >= settings.startFromPage) {
+            const displayNumber = pageNumber - settings.startFromPage + 1;
+            drawPageNumber(page, helvetica, settings, displayNumber, pageW);
+        }
+
+        if (settings.logoEnabled && logoImage && !settings.logoSkipPages.includes(pageNumber)) {
+            drawLogo(page, logoImage, settings, pageW);
+        }
+    });
+}
+
+function drawPageNumber(page, font, settings, pageNumber, pageW) {
+    const text = String(pageNumber);
+    const fontSize = settings.fontSize;
+    const textWidth = font.widthOfTextAtSize(text, fontSize);
+    const color = parseColor(settings.fontColor);
+
+    const x = calcX(pageW, textWidth, settings.pageNumberPosition, settings.marginHorizontal);
+    const y = settings.marginBottom;
+
+    page.drawText(text, { x, y, size: fontSize, font, color });
+}
+
+function drawLogo(page, logoImage, settings, pageW) {
+    let logoW = settings.logoWidth;
+    let logoH = settings.logoHeight;
+
+    const ratio = logoImage.width / logoImage.height;
+    if (logoW / logoH > ratio) logoW = logoH * ratio;
+    else logoH = logoW / ratio;
+
+    const x = calcX(pageW, logoW, settings.logoPosition, settings.marginHorizontal);
+    const y = settings.marginBottom;
+
+    page.drawImage(logoImage, { x, y, width: logoW, height: logoH });
+}
+
+// position: 0 = BottomLeft, 1 = BottomCenter, 2 = BottomRight (bkz. FooterPosition enum)
+function calcX(pageW, elementW, position, marginH) {
+    switch (position) {
+        case 1: return (pageW - elementW) / 2;
+        case 2: return pageW - elementW - marginH;
+        default: return marginH;
+    }
+}
+
+function parseColor(hex) {
+    hex = (hex || '').trim().replace('#', '');
+    if (hex.length !== 6) return rgb(0, 0, 0);
+    const r = parseInt(hex.slice(0, 2), 16) / 255;
+    const g = parseInt(hex.slice(2, 4), 16) / 255;
+    const b = parseInt(hex.slice(4, 6), 16) / 255;
+    return rgb(r, g, b);
+}
+
+// ─── Merge (tamamen tarayıcıda, sunucuya hiçbir dosya gönderilmez) ────────────
 mergeBtn.addEventListener('click', async () => {
     if (uploadedFiles.length < 2) {
         showToast('En az 2 PDF dosyası gereklidir.', 'warning');
@@ -279,50 +319,38 @@ mergeBtn.addEventListener('click', async () => {
 
     setMerging(true);
 
-    const payload = {
-        files: uploadedFiles.map((f, i) => ({
-            fileName: f.fileName,
-            tempFilePath: f.tempFilePath,
-            pageCount: f.pageCount,
-            fileSize: f.fileSize,
-            fileSizeFormatted: f.fileSizeFormatted,
-            order: i
-        })),
-        footer: {
+    try {
+        const orderedFiles = [...uploadedFiles].sort((a, b) => a.order - b.order);
+
+        const outDoc = await PDFDocument.create();
+        for (const file of orderedFiles) {
+            const srcDoc = await PDFDocument.load(file.bytes, { ignoreEncryption: true });
+            const pages = await outDoc.copyPages(srcDoc, srcDoc.getPageIndices());
+            pages.forEach(p => outDoc.addPage(p));
+        }
+
+        const footer = {
             pageNumberEnabled: pageNumberEnabled.checked,
             startFromPage: parseInt(document.getElementById('startFromPage').value),
             pageNumberPosition: parseInt(document.getElementById('pageNumberPosition').value),
             fontSize: parseInt(document.getElementById('fontSize').value),
             fontColor: document.getElementById('fontColor').value,
             logoEnabled: logoEnabled.checked,
-            customLogoPath: customLogoPath,
             logoPosition: parseInt(document.getElementById('logoPosition').value),
             logoWidth: parseFloat(document.getElementById('logoWidth').value),
             logoHeight: parseFloat(document.getElementById('logoHeight').value),
             marginBottom: parseFloat(document.getElementById('marginBottom').value),
             marginHorizontal: parseFloat(document.getElementById('marginHorizontal').value),
             logoSkipPages: parsePageRanges(document.getElementById('logoSkipPages').value)
-        }
-    };
+        };
 
-    try {
-        const res = await fetch('/merge', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        await applyFooter(outDoc, footer);
 
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({ errors: ['Birleştirme başarısız.'] }));
-            showToast((err.errors || ['Birleştirme başarısız.']).join('\n'), 'danger');
-            setMerging(false);
-            return;
-        }
-
-        const blob = await res.blob();
+        const mergedBytes = await outDoc.save();
+        const blob = new Blob([mergedBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         const customName = document.getElementById('outputFileName').value.trim();
-        const fileName = customName ? `${customName}.pdf` : `merged_${new Date().toISOString().slice(0,10)}.pdf`;
+        const fileName = customName ? `${customName}.pdf` : `merged_${new Date().toISOString().slice(0, 10)}.pdf`;
 
         if (pendingDownload) URL.revokeObjectURL(pendingDownload.url);
         pendingDownload = { url, fileName };
@@ -334,7 +362,8 @@ mergeBtn.addEventListener('click', async () => {
         showReopenBtn(true);
 
     } catch (e) {
-        showToast('Sunucu bağlantısı hatası.', 'danger');
+        console.error(e);
+        showToast('Birleştirme başarısız. Dosyalardan biri bozuk veya şifreli olabilir.', 'danger');
     } finally {
         setMerging(false);
     }
