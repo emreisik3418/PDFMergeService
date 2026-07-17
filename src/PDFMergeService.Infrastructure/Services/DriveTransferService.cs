@@ -19,8 +19,8 @@ public class DriveTransferService : IDriveTransferService
 
     public Task<DriveUploadResult> UploadAsync(DriveUploadRequest request)
     {
-        // DocumentService.svc?wsdl kurumsal ağ/VPN üzerinden erişilebilir olduğu için
-        // servis referansı bu ortamda oluşturulamadı. Visual Studio'da bu projeye
+        // DocumentService.svc?wsdl servis referansı bu ortamda oluşturulamadı.
+        // Visual Studio'da bu projeye
         // "Connected Service" (Microsoft WCF Web Service Reference Provider) ekleyip
         // DocumentService.svc?wsdl adresini vererek DocumentServiceClient sınıfını
         // ürettikten sonra bu metodu şu şekilde tamamlayın:
