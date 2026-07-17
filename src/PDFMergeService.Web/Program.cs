@@ -8,6 +8,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.Configure<PdfSettings>(
     builder.Configuration.GetSection("PdfSettings"));
 
+builder.Services.Configure<SharePointSettings>(
+    builder.Configuration.GetSection("SharePointSettings"));
+
 builder.Services.AddPdfServices();
 
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>

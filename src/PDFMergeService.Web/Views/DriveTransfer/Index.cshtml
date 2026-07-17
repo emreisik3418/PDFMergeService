@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Drive Aktarım";
+}
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold text-primary">
+                    <i class="bi bi-cloud-upload me-2"></i>SharePoint'e Dosya Aktar
+                </h5>
+            </div>
+            <div class="card-body p-4">
+
+                <div class="alert alert-info border-0 py-2 px-3 mb-4 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Seçtiğiniz PDF dosyası, aşağıda belirttiğiniz SharePoint site/klasör bilgileriyle
+                    doğrudan Drive'a yüklenir.
+                </div>
+
+                <!-- Dosya Seçimi -->
+                <div class="mb-3">
+                    <label class="form-label fw-medium">PDF Dosyası</label>
+                    <input type="file" id="driveFile" class="form-control" accept="application/pdf" />
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Site Alt Yolu (webPath)</label>
+                        <input type="text" id="driveWebPath" class="form-control"
+                               placeholder="mobiliz.aaa.com/performans" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Hedef Klasör (path)</label>
+                        <input type="text" id="drivePath" class="form-control"
+                               placeholder="/Belgeler/2026" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Dosya Adı <span class="text-muted small">(opsiyonel, boşsa seçilen dosya adı kullanılır)</span></label>
+                    <input type="text" id="driveFileName" class="form-control" placeholder="rapor.pdf" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-medium">Ek Parametreler <span class="text-muted small">(opsiyonel)</span></label>
+                    <input type="text" id="driveExtraParams" class="form-control"
+                           placeholder="Title|Performans Raporu|AccIsMobile|false|" />
+                    <div class="form-text">
+                        <code>Anahtar|Değer|</code> formatında, art arda eklenebilir. Örn: <code>Title|Rapor|AccIsMobile|false|</code>
+                    </div>
+                </div>
+
+                <button type="button" id="driveUploadBtn" class="btn btn-primary btn-lg w-100 shadow-sm">
+                    <span id="driveUploadBtnNormal">
+                        <i class="bi bi-cloud-arrow-up-fill me-2"></i>SharePoint'e Aktar
+                    </span>
+                    <span id="driveUploadBtnLoading" class="d-none">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Aktarılıyor...
+                    </span>
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/drive-transfer.js" asp-append-version="true"></script>
+}

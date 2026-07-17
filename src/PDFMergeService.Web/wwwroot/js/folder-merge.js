@@ -21,6 +21,10 @@ const mergeProgress      = document.getElementById('mergeProgress');
 const mergeProgressBar   = document.getElementById('mergeProgressBar');
 const mergeProgressLabel = document.getElementById('mergeProgressLabel');
 const mergeProgressPercent = document.getElementById('mergeProgressPercent');
+const transferBtn        = document.getElementById('transferBtn');
+const transferBtnNormal  = document.getElementById('transferBtnNormal');
+const transferBtnLoading = document.getElementById('transferBtnLoading');
+const transferResults    = document.getElementById('transferResults');
 
 // ─── Scan ─────────────────────────────────────────────────────────────────────
 scanBtn.addEventListener('click', scanFolders);
@@ -123,6 +127,7 @@ function renderFolderList() {
     folderCount.textContent = scannedFolders.length;
     totalPdfBadge.textContent = `Toplam ${totalPdf} PDF`;
     mergeAllBtn.disabled = false;
+    transferBtn.disabled = false;
     document.getElementById('f_detectLogoBtn').disabled = false;
 
     // checkbox events
@@ -147,6 +152,7 @@ function updateSelectAll() {
 function updateMergeBtn() {
     const anyChecked = [...document.querySelectorAll('.folder-check')].some(c => c.checked);
     mergeAllBtn.disabled = !anyChecked;
+    transferBtn.disabled = !anyChecked;
 }
 
 // ─── Merge All ────────────────────────────────────────────────────────────────
@@ -227,6 +233,73 @@ function showMergeProgress(show, label = '', percent = 0) {
         mergeProgressBar.style.width = percent + '%';
         mergeProgressPercent.textContent = percent + '%';
     }
+}
+
+// ─── SharePoint Transfer ──────────────────────────────────────────────────────
+transferBtn.addEventListener('click', async () => {
+    const checks = [...document.querySelectorAll('.folder-check')];
+    const selected = scannedFolders.filter((_, i) => checks[i]?.checked);
+
+    if (selected.length === 0) { showToast('En az bir klasör seçin.', 'warning'); return; }
+
+    const webPath = document.getElementById('t_webPath').value.trim();
+    const path = document.getElementById('t_path').value.trim();
+    if (!webPath || !path) { showToast('Site alt yolu ve hedef klasör alanları zorunludur.', 'warning'); return; }
+
+    setTransferring(true);
+    transferResults.innerHTML = '';
+
+    const payload = {
+        folders: selected.map(f => ({
+            folderName: f.folderName,
+            folderPath: f.folderPath,
+            pdfFiles: f.pdfFiles
+        })),
+        footer: collectFooterSettings(),
+        webPath,
+        path,
+        extraParams: document.getElementById('t_extraParams').value.trim() || null
+    };
+
+    try {
+        const res = await fetch('/folder-merge/transfer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Aktarım başarısız.' }));
+            showToast(err.error || 'Aktarım başarısız.', 'danger');
+            return;
+        }
+
+        const data = await res.json();
+        renderTransferResults(data.results);
+
+        const successCount = data.results.filter(r => r.success).length;
+        showToast(`${successCount} / ${data.results.length} klasör SharePoint'e aktarıldı.`,
+            successCount === data.results.length ? 'success' : 'warning');
+
+    } catch {
+        showToast('Sunucu bağlantısı hatası.', 'danger');
+    } finally {
+        setTransferring(false);
+    }
+});
+
+function renderTransferResults(results) {
+    transferResults.innerHTML = results.map(r => `
+        <div class="d-flex align-items-start gap-2 mb-1">
+            <i class="bi bi-${r.success ? 'check-circle-fill text-success' : 'x-circle-fill text-danger'}"></i>
+            <span><strong>${escHtml(r.folder)}</strong> — ${escHtml(r.message || (r.success ? 'Aktarıldı' : 'Başarısız'))}</span>
+        </div>`).join('');
+}
+
+function setTransferring(loading) {
+    transferBtn.disabled = loading;
+    transferBtnNormal.classList.toggle('d-none', loading);
+    transferBtnLoading.classList.toggle('d-none', !loading);
 }
 
 // ─── Logo Detection ───────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPdfFooterService, PdfFooterService>();
         services.AddScoped<IFolderScanService, FolderScanService>();
         services.AddScoped<IPdfLogoDetectionService, PdfLogoDetectionService>();
+        services.AddScoped<IDriveTransferService, DriveTransferService>();
         return services;
     }
 }

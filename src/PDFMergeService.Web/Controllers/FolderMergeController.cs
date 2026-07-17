@@ -13,6 +13,7 @@ public class FolderMergeController : Controller
     private readonly IPdfMergeService _pdfMergeService;
     private readonly IPdfFooterService _pdfFooterService;
     private readonly IPdfLogoDetectionService _logoDetectionService;
+    private readonly IDriveTransferService _driveTransferService;
     private readonly ILogger<FolderMergeController> _logger;
 
     public FolderMergeController(
@@ -20,12 +21,14 @@ public class FolderMergeController : Controller
         IPdfMergeService pdfMergeService,
         IPdfFooterService pdfFooterService,
         IPdfLogoDetectionService logoDetectionService,
+        IDriveTransferService driveTransferService,
         ILogger<FolderMergeController> logger)
     {
         _folderScanService = folderScanService;
         _pdfMergeService = pdfMergeService;
         _pdfFooterService = pdfFooterService;
         _logoDetectionService = logoDetectionService;
+        _driveTransferService = driveTransferService;
         _logger = logger;
     }
 
@@ -130,6 +133,64 @@ public class FolderMergeController : Controller
         zipStream.Position = 0;
         var zipName = $"TopluBirlestirme_{today}.zip";
         return File(zipStream.ToArray(), "application/zip", zipName);
+    }
+
+    [HttpPost("/folder-merge/transfer")]
+    public async Task<IActionResult> Transfer([FromBody] FolderMergeTransferRequestViewModel model)
+    {
+        if (model.Folders == null || model.Folders.Count == 0)
+            return BadRequest(new { error = "Aktarılacak klasör bulunamadı." });
+
+        if (string.IsNullOrWhiteSpace(model.WebPath) || string.IsNullOrWhiteSpace(model.Path))
+            return BadRequest(new { error = "Hedef yol (site alt yolu / klasör yolu) boş olamaz." });
+
+        var footer = MapFooterSettings(model.Footer);
+        var today = DateTime.Now.ToString("yyyyMMdd");
+        var results = new List<object>();
+
+        foreach (var folder in model.Folders)
+        {
+            if (folder.PdfFiles == null || folder.PdfFiles.Count == 0) continue;
+
+            var fileName = $"{SanitizeFileName(folder.FolderName)}_{today}.pdf";
+
+            var request = new PdfMergeRequest
+            {
+                Files = folder.PdfFiles.Select((f, i) => new PdfFileInfo
+                {
+                    FileName = f,
+                    TempFilePath = Path.Combine(folder.FolderPath, f),
+                    Order = i
+                }).ToList(),
+                Footer = footer
+            };
+
+            try
+            {
+                byte[] merged = await _pdfMergeService.MergeAsync(request);
+                byte[] final = await _pdfFooterService.ApplyFooterAsync(merged, footer);
+
+                var uploadResult = await _driveTransferService.UploadAsync(new DriveUploadRequest
+                {
+                    WebPath = model.WebPath.Trim(),
+                    Path = model.Path.Trim(),
+                    FileName = fileName,
+                    ExtraParams = string.IsNullOrWhiteSpace(model.ExtraParams) ? null : model.ExtraParams.Trim(),
+                    FileBytes = final
+                });
+
+                results.Add(new { folder = folder.FolderName, fileName, success = uploadResult.Success, message = uploadResult.Message });
+
+                _logger.LogInformation("SharePoint aktarımı: {Folder} -> {Success}", folder.FolderName, uploadResult.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SharePoint aktarım hatası: {Folder}", folder.FolderName);
+                results.Add(new { folder = folder.FolderName, fileName, success = false, message = "Beklenmeyen hata oluştu." });
+            }
+        }
+
+        return Ok(new { results });
     }
 
     [HttpPost("/folder-merge/detect-logo")]

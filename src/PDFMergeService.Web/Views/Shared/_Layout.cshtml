@@ -32,6 +32,12 @@
                             <i class="bi bi-folder2-open me-1"></i>Klasör Birleştirme
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DriveTransfer" ? "active" : "")"
+                           asp-controller="DriveTransfer" asp-action="Index">
+                            <i class="bi bi-cloud-upload me-1"></i>Drive Aktarım
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
