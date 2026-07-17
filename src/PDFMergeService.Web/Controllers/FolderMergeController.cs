@@ -146,6 +146,7 @@ public class FolderMergeController : Controller
 
         var footer = MapFooterSettings(model.Footer);
         var today = DateTime.Now.ToString("yyyyMMdd");
+        var extraParams = ParseExtraParams(model.ExtraParams);
         var results = new List<object>();
 
         foreach (var folder in model.Folders)
@@ -175,7 +176,7 @@ public class FolderMergeController : Controller
                     WebPath = model.WebPath.Trim(),
                     Path = model.Path.Trim(),
                     FileName = fileName,
-                    ExtraParams = string.IsNullOrWhiteSpace(model.ExtraParams) ? null : model.ExtraParams.Trim(),
+                    ExtraParams = extraParams,
                     FileBytes = final
                 });
 
@@ -244,6 +245,11 @@ public class FolderMergeController : Controller
         MarginHorizontal = vm.MarginHorizontal,
         LogoSkipPages = vm.LogoSkipPages
     };
+
+    private static string[] ParseExtraParams(string? raw) =>
+        string.IsNullOrWhiteSpace(raw)
+            ? Array.Empty<string>()
+            : raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     private static string SanitizeFileName(string name)
     {

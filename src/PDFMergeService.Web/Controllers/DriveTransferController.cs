@@ -36,7 +36,7 @@ public class DriveTransferController : Controller
             WebPath = model.WebPath.Trim(),
             Path = model.Path.Trim(),
             FileName = string.IsNullOrWhiteSpace(model.FileName) ? model.File.FileName : model.FileName.Trim(),
-            ExtraParams = string.IsNullOrWhiteSpace(model.ExtraParams) ? null : model.ExtraParams.Trim(),
+            ExtraParams = ParseExtraParams(model.ExtraParams),
             FileBytes = ms.ToArray()
         };
 
@@ -54,4 +54,9 @@ public class DriveTransferController : Controller
             return StatusCode(500, new { error = "Aktarım sırasında beklenmeyen bir hata oluştu." });
         }
     }
+
+    private static string[] ParseExtraParams(string? raw) =>
+        string.IsNullOrWhiteSpace(raw)
+            ? Array.Empty<string>()
+            : raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
