@@ -5,6 +5,7 @@ const driveWebPath      = document.getElementById('driveWebPath');
 const drivePath         = document.getElementById('drivePath');
 const driveFileName     = document.getElementById('driveFileName');
 const driveExtraParams  = document.getElementById('driveExtraParams');
+const driveIsMergedVersion = document.getElementById('driveIsMergedVersion');
 const driveUploadBtn    = document.getElementById('driveUploadBtn');
 const driveUploadBtnNormal  = document.getElementById('driveUploadBtnNormal');
 const driveUploadBtnLoading = document.getElementById('driveUploadBtnLoading');
@@ -23,6 +24,7 @@ driveUploadBtn.addEventListener('click', async () => {
     formData.append('Path', drivePath.value.trim());
     if (driveFileName.value.trim()) formData.append('FileName', driveFileName.value.trim());
     if (driveExtraParams.value.trim()) formData.append('ExtraParams', driveExtraParams.value.trim());
+    formData.append('IsMergedVersion', driveIsMergedVersion.checked ? 'true' : 'false');
 
     setUploading(true);
 

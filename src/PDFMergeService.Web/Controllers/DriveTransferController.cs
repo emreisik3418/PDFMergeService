@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using PDFMergeService.Core.Interfaces;
 using PDFMergeService.Core.Models;
+using PDFMergeService.Core.Settings;
 using PDFMergeService.Web.ViewModels.DriveTransfer;
 
 namespace PDFMergeService.Web.Controllers;
@@ -8,16 +10,24 @@ namespace PDFMergeService.Web.Controllers;
 public class DriveTransferController : Controller
 {
     private readonly IDriveTransferService _driveTransferService;
+    private readonly SharePointSettings _sharePointSettings;
     private readonly ILogger<DriveTransferController> _logger;
 
-    public DriveTransferController(IDriveTransferService driveTransferService, ILogger<DriveTransferController> logger)
+    public DriveTransferController(
+        IDriveTransferService driveTransferService,
+        IOptions<SharePointSettings> sharePointSettings,
+        ILogger<DriveTransferController> logger)
     {
         _driveTransferService = driveTransferService;
+        _sharePointSettings = sharePointSettings.Value;
         _logger = logger;
     }
 
     [HttpGet("/drive-transfer")]
-    public IActionResult Index() => View();
+    public IActionResult Index() => View(new DriveTransferIndexViewModel
+    {
+        WebPathOptions = _sharePointSettings.WebPathOptions
+    });
 
     [HttpPost("/drive-transfer/upload")]
     public async Task<IActionResult> Upload([FromForm] DriveTransferUploadViewModel model)
@@ -31,12 +41,15 @@ public class DriveTransferController : Controller
         using var ms = new MemoryStream();
         await model.File.CopyToAsync(ms);
 
+        var fileName = string.IsNullOrWhiteSpace(model.FileName) ? model.File.FileName : model.FileName.Trim();
+        var title = Path.GetFileNameWithoutExtension(fileName);
+
         var request = new DriveUploadRequest
         {
             WebPath = model.WebPath.Trim(),
             Path = model.Path.Trim(),
-            FileName = string.IsNullOrWhiteSpace(model.FileName) ? model.File.FileName : model.FileName.Trim(),
-            ExtraParams = ParseExtraParams(model.ExtraParams),
+            FileName = fileName,
+            ExtraParams = BuildExtraParams(model.ExtraParams, title, model.IsMergedVersion),
             FileBytes = ms.ToArray()
         };
 
@@ -55,8 +68,20 @@ public class DriveTransferController : Controller
         }
     }
 
-    private static string[] ParseExtraParams(string? raw) =>
-        string.IsNullOrWhiteSpace(raw)
-            ? Array.Empty<string>()
-            : raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    private static string[] BuildExtraParams(string? raw, string title, bool isMergedVersion)
+    {
+        var userParams = string.IsNullOrWhiteSpace(raw)
+            ? Enumerable.Empty<string>()
+            : raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                 .Where(line => !line.StartsWith("Title|", StringComparison.OrdinalIgnoreCase)
+                             && !line.StartsWith("ACCIsMergedVersion|", StringComparison.OrdinalIgnoreCase));
+
+        var autoParams = new[]
+        {
+            $"Title|{title}|",
+            $"ACCIsMergedVersion|{(isMergedVersion ? "true" : "false")}|"
+        };
+
+        return userParams.Concat(autoParams).ToArray();
+    }
 }

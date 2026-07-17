@@ -1,3 +1,4 @@
+@model PDFMergeService.Web.ViewModels.DriveTransfer.DriveTransferIndexViewModel
 @{
     ViewData["Title"] = "Drive Aktarım";
 }
@@ -27,8 +28,19 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-medium">Site Alt Yolu (webPath)</label>
-                        <input type="text" id="driveWebPath" class="form-control"
-                               placeholder="site-adi.com/klasor-yolu" />
+                        <select id="driveWebPath" class="form-select">
+                            <option value="">Seçiniz...</option>
+                            @foreach (var opt in Model.WebPathOptions)
+                            {
+                                <option value="@opt.Value">@opt.Label</option>
+                            }
+                        </select>
+                        @if (!Model.WebPathOptions.Any())
+                        {
+                            <div class="form-text text-warning">
+                                appsettings içinde <code>SharePointSettings:WebPathOptions</code> tanımlı değil.
+                            </div>
+                        }
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-medium">Hedef Klasör (path)</label>
@@ -42,12 +54,23 @@
                     <input type="text" id="driveFileName" class="form-control" placeholder="rapor.pdf" />
                 </div>
 
+                <div class="mb-3 form-check">
+                    <input type="checkbox" id="driveIsMergedVersion" class="form-check-input" />
+                    <label class="form-check-label fw-medium" for="driveIsMergedVersion">
+                        Birleştirilmiş PDF olarak işaretle (ACCIsMergedVersion)
+                    </label>
+                    <div class="form-text">
+                        İşaretlenirse dosya Drive tarafında birleştirilmiş sürüm olarak görünür.
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <label class="form-label fw-medium">Ek Parametreler <span class="text-muted small">(opsiyonel)</span></label>
                     <textarea id="driveExtraParams" class="form-control" rows="2"
-                              placeholder="Title|Performans Raporu|&#10;AccIsMobile|false|"></textarea>
+                              placeholder="AccIsMobile|false|"></textarea>
                     <div class="form-text">
-                        Her satıra bir <code>Anahtar|Değer|</code> girin. Örn: <code>Title|Rapor|</code>
+                        Her satıra bir <code>Anahtar|Değer|</code> girin. <code>Title</code> ve <code>ACCIsMergedVersion</code>
+                        otomatik eklenir, tekrar girmenize gerek yok.
                     </div>
                 </div>
 

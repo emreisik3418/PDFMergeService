@@ -7,4 +7,5 @@ public class DriveTransferUploadViewModel
     public string Path { get; set; } = string.Empty;
     public string? FileName { get; set; }
     public string? ExtraParams { get; set; }
+    public bool IsMergedVersion { get; set; }
 }
