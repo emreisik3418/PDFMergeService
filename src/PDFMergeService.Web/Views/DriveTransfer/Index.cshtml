@@ -4,7 +4,7 @@
 }
 
 <div class="row g-4 justify-content-center">
-    <div class="col-lg-7">
+    <div class="col-lg-9">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-bottom py-3">
                 <h5 class="mb-0 fw-semibold text-primary">
@@ -13,76 +13,187 @@
             </div>
             <div class="card-body p-4">
 
-                <div class="alert alert-info border-0 py-2 px-3 mb-4 small">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Seçtiğiniz PDF dosyası, aşağıda belirttiğiniz SharePoint site/klasör bilgileriyle
-                    doğrudan Drive'a yüklenir.
-                </div>
+                <ul class="nav nav-pills mb-4" id="driveModeTabs">
+                    <li class="nav-item">
+                        <button type="button" class="nav-link active" data-drive-tab="single">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Tekli Yükleme
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link" data-drive-tab="bulk">
+                            <i class="bi bi-collection me-1"></i>Toplu Yükleme
+                        </button>
+                    </li>
+                </ul>
 
-                <!-- Dosya Seçimi -->
-                <div class="mb-3">
-                    <label class="form-label fw-medium">PDF Dosyası</label>
-                    <input type="file" id="driveFile" class="form-control" accept="application/pdf" />
-                </div>
+                <!-- Tekli Yükleme -->
+                <div id="driveSinglePanel">
 
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-medium">Site Alt Yolu (webPath)</label>
-                        <select id="driveWebPath" class="form-select">
-                            <option value="">Seçiniz...</option>
-                            @foreach (var opt in Model.WebPathOptions)
+                    <div class="alert alert-info border-0 py-2 px-3 mb-4 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Seçtiğiniz PDF dosyası, aşağıda belirttiğiniz SharePoint site/klasör bilgileriyle
+                        doğrudan Drive'a yüklenir.
+                    </div>
+
+                    <!-- Dosya Seçimi -->
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">PDF Dosyası</label>
+                        <input type="file" id="driveFile" class="form-control" accept="application/pdf" />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Site Alt Yolu (webPath)</label>
+                            <select id="driveWebPath" class="form-select">
+                                <option value="">Seçiniz...</option>
+                                @foreach (var opt in Model.WebPathOptions)
+                                {
+                                    <option value="@opt.Value">@opt.Label</option>
+                                }
+                            </select>
+                            @if (!Model.WebPathOptions.Any())
                             {
-                                <option value="@opt.Value">@opt.Label</option>
+                                <div class="form-text text-warning">
+                                    appsettings içinde <code>SharePointSettings:WebPathOptions</code> tanımlı değil.
+                                </div>
                             }
-                        </select>
-                        @if (!Model.WebPathOptions.Any())
-                        {
-                            <div class="form-text text-warning">
-                                appsettings içinde <code>SharePointSettings:WebPathOptions</code> tanımlı değil.
-                            </div>
-                        }
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Hedef Klasör (path)</label>
+                            <input type="text" id="drivePath" class="form-control"
+                                   placeholder="/Belgeler/2026" />
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-medium">Hedef Klasör (path)</label>
-                        <input type="text" id="drivePath" class="form-control"
-                               placeholder="/Belgeler/2026" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Dosya Adı <span class="text-muted small">(opsiyonel, boşsa seçilen dosya adı kullanılır)</span></label>
+                        <input type="text" id="driveFileName" class="form-control" placeholder="rapor.pdf" />
                     </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" id="driveIsMergedVersion" class="form-check-input" />
+                        <label class="form-check-label fw-medium" for="driveIsMergedVersion">
+                            Birleştirilmiş PDF olarak işaretle (ACCIsMergedVersion)
+                        </label>
+                        <div class="form-text">
+                            İşaretlenirse dosya Drive tarafında birleştirilmiş sürüm olarak görünür.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Ek Parametreler <span class="text-muted small">(opsiyonel)</span></label>
+                        <textarea id="driveExtraParams" class="form-control" rows="2"
+                                  placeholder="AccIsMobile|false|"></textarea>
+                        <div class="form-text">
+                            Her satıra bir <code>Anahtar|Değer|</code> girin. <code>Title</code> ve <code>ACCIsMergedVersion</code>
+                            otomatik eklenir, tekrar girmenize gerek yok.
+                        </div>
+                    </div>
+
+                    <button type="button" id="driveUploadBtn" class="btn btn-primary btn-lg w-100 shadow-sm">
+                        <span id="driveUploadBtnNormal">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i>SharePoint'e Aktar
+                        </span>
+                        <span id="driveUploadBtnLoading" class="d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Aktarılıyor...
+                        </span>
+                    </button>
+
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-medium">Dosya Adı <span class="text-muted small">(opsiyonel, boşsa seçilen dosya adı kullanılır)</span></label>
-                    <input type="text" id="driveFileName" class="form-control" placeholder="rapor.pdf" />
-                </div>
+                <!-- Toplu Yükleme -->
+                <div id="driveBulkPanel" class="d-none">
 
-                <div class="mb-3 form-check">
-                    <input type="checkbox" id="driveIsMergedVersion" class="form-check-input" />
-                    <label class="form-check-label fw-medium" for="driveIsMergedVersion">
-                        Birleştirilmiş PDF olarak işaretle (ACCIsMergedVersion)
-                    </label>
-                    <div class="form-text">
-                        İşaretlenirse dosya Drive tarafında birleştirilmiş sürüm olarak görünür.
+                    <div class="alert alert-info border-0 py-2 px-3 mb-4 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Dosya adından bölge ve dönem (yıl - çeyrek) otomatik olarak ayıklanır ve seçtiğiniz
+                        klasör kökü altında (<code>Kök/Bölge/Yıl - Çeyrek. Çeyrek</code>) hedef klasör önerilir.
+                        Yüklemeden önce aşağıdaki tablodan her dosyanın hedef klasörünü kontrol edip gerekirse düzeltebilirsiniz.
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-medium">Ek Parametreler <span class="text-muted small">(opsiyonel)</span></label>
-                    <textarea id="driveExtraParams" class="form-control" rows="2"
-                              placeholder="AccIsMobile|false|"></textarea>
-                    <div class="form-text">
-                        Her satıra bir <code>Anahtar|Değer|</code> girin. <code>Title</code> ve <code>ACCIsMergedVersion</code>
-                        otomatik eklenir, tekrar girmenize gerek yok.
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Klasör Kökü (rapor tipi)</label>
+                            <select id="driveBulkRootPath" class="form-select">
+                                <option value="">Seçiniz...</option>
+                                @foreach (var opt in Model.BulkRootPathOptions)
+                                {
+                                    <option value="@opt.Value">@opt.Label</option>
+                                }
+                            </select>
+                            @if (!Model.BulkRootPathOptions.Any())
+                            {
+                                <div class="form-text text-warning">
+                                    appsettings içinde <code>SharePointSettings:BulkRootPathOptions</code> tanımlı değil.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="form-text">
+                                    Kökü değiştirmek, tablodaki türetilmiş tüm yolları yeniden hesaplar.
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Site Alt Yolu (webPath)</label>
+                            <select id="driveBulkWebPath" class="form-select">
+                                <option value="">Seçiniz...</option>
+                                @foreach (var opt in Model.WebPathOptions)
+                                {
+                                    <option value="@opt.Value">@opt.Label</option>
+                                }
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <button type="button" id="driveUploadBtn" class="btn btn-primary btn-lg w-100 shadow-sm">
-                    <span id="driveUploadBtnNormal">
-                        <i class="bi bi-cloud-arrow-up-fill me-2"></i>SharePoint'e Aktar
-                    </span>
-                    <span id="driveUploadBtnLoading" class="d-none">
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        Aktarılıyor...
-                    </span>
-                </button>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">PDF Dosyaları</label>
+                        <input type="file" id="driveBulkFiles" class="form-control" accept="application/pdf" multiple />
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" id="driveBulkIsMergedVersion" class="form-check-input" />
+                        <label class="form-check-label fw-medium" for="driveBulkIsMergedVersion">
+                            Birleştirilmiş PDF olarak işaretle (ACCIsMergedVersion)
+                        </label>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Ek Parametreler <span class="text-muted small">(opsiyonel, tüm dosyalar için ortak)</span></label>
+                        <textarea id="driveBulkExtraParams" class="form-control" rows="2"
+                                  placeholder="AccIsMobile|false|"></textarea>
+                    </div>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm align-middle" id="driveBulkTable">
+                            <thead>
+                                <tr>
+                                    <th>Dosya Adı</th>
+                                    <th style="min-width: 320px;">Hedef Klasör (Path)</th>
+                                    <th>Durum</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="driveBulkTableBody">
+                                <tr id="driveBulkEmptyRow">
+                                    <td colspan="4" class="text-muted text-center py-3">Henüz dosya seçilmedi.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <button type="button" id="driveBulkUploadBtn" class="btn btn-primary btn-lg w-100 shadow-sm">
+                        <span id="driveBulkUploadBtnNormal">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i>Toplu Aktar
+                        </span>
+                        <span id="driveBulkUploadBtnLoading" class="d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Aktarılıyor...
+                        </span>
+                    </button>
+
+                </div>
 
             </div>
         </div>

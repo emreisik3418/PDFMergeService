@@ -26,7 +26,8 @@ public class DriveTransferController : Controller
     [HttpGet("/drive-transfer")]
     public IActionResult Index() => View(new DriveTransferIndexViewModel
     {
-        WebPathOptions = _sharePointSettings.WebPathOptions
+        WebPathOptions = _sharePointSettings.WebPathOptions,
+        BulkRootPathOptions = _sharePointSettings.BulkRootPathOptions
     });
 
     [HttpPost("/drive-transfer/upload")]
@@ -38,33 +39,82 @@ public class DriveTransferController : Controller
         if (string.IsNullOrWhiteSpace(model.WebPath) || string.IsNullOrWhiteSpace(model.Path))
             return BadRequest(new { error = "Hedef yol (site alt yolu / klasör yolu) boş olamaz." });
 
-        using var ms = new MemoryStream();
-        await model.File.CopyToAsync(ms);
-
         var fileName = string.IsNullOrWhiteSpace(model.FileName) ? model.File.FileName : model.FileName.Trim();
+
+        var (success, message) = await UploadOneAsync(
+            model.File, model.WebPath.Trim(), model.Path.Trim(), fileName, model.ExtraParams, model.IsMergedVersion);
+
+        if (!success)
+            return StatusCode(502, new { error = message });
+
+        return Ok(new { message });
+    }
+
+    [HttpPost("/drive-transfer/upload-bulk")]
+    public async Task<IActionResult> UploadBulk([FromForm] DriveTransferBulkUploadViewModel model)
+    {
+        if (model.Items == null || model.Items.Count == 0)
+            return BadRequest(new { error = "Lütfen en az bir PDF dosyası seçin." });
+
+        if (string.IsNullOrWhiteSpace(model.WebPath))
+            return BadRequest(new { error = "Site alt yolu (webPath) boş olamaz." });
+
+        var webPath = model.WebPath.Trim();
+        var results = new List<object>();
+
+        foreach (var item in model.Items)
+        {
+            var fileName = item.File?.FileName ?? "(bilinmiyor)";
+
+            if (item.File == null || item.File.Length == 0)
+            {
+                results.Add(new { fileName, path = item.Path, success = false, message = "Dosya boş veya okunamadı." });
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(item.Path))
+            {
+                results.Add(new { fileName, path = item.Path, success = false, message = "Hedef klasör (path) boş, lütfen elle girin." });
+                continue;
+            }
+
+            var (success, message) = await UploadOneAsync(
+                item.File, webPath, item.Path.Trim(), item.File.FileName, model.ExtraParams, model.IsMergedVersion);
+
+            results.Add(new { fileName, path = item.Path, success, message });
+        }
+
+        return Ok(new { results });
+    }
+
+    private async Task<(bool Success, string Message)> UploadOneAsync(
+        IFormFile file, string webPath, string path, string fileName, string? extraParamsRaw, bool isMergedVersion)
+    {
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms);
+
         var title = Path.GetFileNameWithoutExtension(fileName);
 
         var request = new DriveUploadRequest
         {
-            WebPath = model.WebPath.Trim(),
-            Path = model.Path.Trim(),
+            WebPath = webPath,
+            Path = path,
             FileName = fileName,
-            ExtraParams = BuildExtraParams(model.ExtraParams, title, model.IsMergedVersion),
+            ExtraParams = BuildExtraParams(extraParamsRaw, title, isMergedVersion),
             FileBytes = ms.ToArray()
         };
 
         try
         {
             var result = await _driveTransferService.UploadAsync(request);
-            if (!result.Success)
-                return StatusCode(502, new { error = result.Message ?? "SharePoint aktarımı başarısız." });
-
-            return Ok(new { message = result.Message ?? "Dosya SharePoint'e aktarıldı." });
+            return (result.Success, result.Message ?? (result.Success
+                ? "Dosya SharePoint'e aktarıldı."
+                : "SharePoint aktarımı başarısız."));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Drive aktarım hatası: {FileName}", model.File.FileName);
-            return StatusCode(500, new { error = "Aktarım sırasında beklenmeyen bir hata oluştu." });
+            _logger.LogError(ex, "Drive aktarım hatası: {FileName}", fileName);
+            return (false, "Aktarım sırasında beklenmeyen bir hata oluştu.");
         }
     }
 
