@@ -56,10 +56,10 @@ public class DriveTransferController : Controller
         if (model.Items == null || model.Items.Count == 0)
             return BadRequest(new { error = "Lütfen en az bir PDF dosyası seçin." });
 
-        if (string.IsNullOrWhiteSpace(model.WebPath))
-            return BadRequest(new { error = "Site alt yolu (webPath) boş olamaz." });
+        if (string.IsNullOrWhiteSpace(_sharePointSettings.BulkWebPath))
+            return StatusCode(500, new { error = "appsettings içinde SharePointSettings:BulkWebPath tanımlı değil." });
 
-        var webPath = model.WebPath.Trim();
+        var webPath = _sharePointSettings.BulkWebPath.Trim();
         var results = new List<object>();
 
         foreach (var item in model.Items)
@@ -79,7 +79,7 @@ public class DriveTransferController : Controller
             }
 
             var (success, message) = await UploadOneAsync(
-                item.File, webPath, item.Path.Trim(), item.File.FileName, model.ExtraParams, model.IsMergedVersion);
+                item.File, webPath, item.Path.Trim(), item.File.FileName, extraParamsRaw: null, item.IsMergedVersion);
 
             results.Add(new { fileName, path = item.Path, success, message });
         }

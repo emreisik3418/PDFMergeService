@@ -112,57 +112,37 @@
                         Yüklemeden önce aşağıdaki tablodan her dosyanın hedef klasörünü kontrol edip gerekirse düzeltebilirsiniz.
                     </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Klasör Kökü (rapor tipi)</label>
-                            <select id="driveBulkRootPath" class="form-select">
-                                <option value="">Seçiniz...</option>
-                                @foreach (var opt in Model.BulkRootPathOptions)
-                                {
-                                    <option value="@opt.Value">@opt.Label</option>
-                                }
-                            </select>
-                            @if (!Model.BulkRootPathOptions.Any())
-                            {
-                                <div class="form-text text-warning">
-                                    appsettings içinde <code>SharePointSettings:BulkRootPathOptions</code> tanımlı değil.
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="form-text">
-                                    Kökü değiştirmek, tablodaki türetilmiş tüm yolları yeniden hesaplar.
-                                </div>
-                            }
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Site Alt Yolu (webPath)</label>
-                            <select id="driveBulkWebPath" class="form-select">
-                                <option value="">Seçiniz...</option>
-                                @foreach (var opt in Model.WebPathOptions)
-                                {
-                                    <option value="@opt.Value">@opt.Label</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-
                     <div class="mb-3">
-                        <label class="form-label fw-medium">PDF Dosyaları</label>
-                        <input type="file" id="driveBulkFiles" class="form-control" accept="application/pdf" multiple />
-                    </div>
-
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" id="driveBulkIsMergedVersion" class="form-check-input" />
-                        <label class="form-check-label fw-medium" for="driveBulkIsMergedVersion">
-                            Birleştirilmiş PDF olarak işaretle (ACCIsMergedVersion)
-                        </label>
+                        <label class="form-label fw-medium">Klasör Kökü (rapor tipi)</label>
+                        <select id="driveBulkRootPath" class="form-select">
+                            <option value="">Seçiniz...</option>
+                            @foreach (var opt in Model.BulkRootPathOptions)
+                            {
+                                <option value="@opt.Value">@opt.Label</option>
+                            }
+                        </select>
+                        @if (!Model.BulkRootPathOptions.Any())
+                        {
+                            <div class="form-text text-warning">
+                                appsettings içinde <code>SharePointSettings:BulkRootPathOptions</code> tanımlı değil.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-text">
+                                Kökü değiştirmek, tablodaki türetilmiş tüm yolları yeniden hesaplar.
+                            </div>
+                        }
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-medium">Ek Parametreler <span class="text-muted small">(opsiyonel, tüm dosyalar için ortak)</span></label>
-                        <textarea id="driveBulkExtraParams" class="form-control" rows="2"
-                                  placeholder="AccIsMobile|false|"></textarea>
+                        <label class="form-label fw-medium">PDF Dosyaları</label>
+                        <input type="file" id="driveBulkFiles" class="form-control" accept="application/pdf" multiple />
+                        <div class="form-text">
+                            Birleştirilmiş rapor ve onun tekli sayfa dosyalarını (kapak, segment vb.) aynı anda
+                            seçip aynı klasöre gönderebilirsiniz — hangisinin "birleştirilmiş" (ACCIsMergedVersion)
+                            olarak işaretleneceğini aşağıdaki tabloda dosya bazında ayarlayın.
+                        </div>
                     </div>
 
                     <div class="table-responsive mb-3">
@@ -171,13 +151,20 @@
                                 <tr>
                                     <th>Dosya Adı</th>
                                     <th style="min-width: 320px;">Hedef Klasör (Path)</th>
+                                    <th class="text-center">
+                                        Birleştirilmiş mi?<br />
+                                        <label class="small fw-normal">
+                                            <input type="checkbox" id="driveBulkSelectAllMerged" class="form-check-input align-middle" />
+                                            Tümünü seç
+                                        </label>
+                                    </th>
                                     <th>Durum</th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody id="driveBulkTableBody">
                                 <tr id="driveBulkEmptyRow">
-                                    <td colspan="4" class="text-muted text-center py-3">Henüz dosya seçilmedi.</td>
+                                    <td colspan="5" class="text-muted text-center py-3">Henüz dosya seçilmedi.</td>
                                 </tr>
                             </tbody>
                         </table>

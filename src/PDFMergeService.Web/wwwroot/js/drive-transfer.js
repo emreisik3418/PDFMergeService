@@ -70,9 +70,7 @@ document.querySelectorAll('#driveModeTabs [data-drive-tab]').forEach(btn => {
 
 const driveBulkFiles          = document.getElementById('driveBulkFiles');
 const driveBulkRootPath       = document.getElementById('driveBulkRootPath');
-const driveBulkWebPath        = document.getElementById('driveBulkWebPath');
-const driveBulkExtraParams    = document.getElementById('driveBulkExtraParams');
-const driveBulkIsMergedVersion = document.getElementById('driveBulkIsMergedVersion');
+const driveBulkSelectAllMerged = document.getElementById('driveBulkSelectAllMerged');
 const driveBulkTableBody      = document.getElementById('driveBulkTableBody');
 const driveBulkEmptyRow       = document.getElementById('driveBulkEmptyRow');
 const driveBulkUploadBtn      = document.getElementById('driveBulkUploadBtn');
@@ -107,10 +105,12 @@ driveBulkFiles.addEventListener('change', () => {
             showToast(`"${file.name}" bir PDF dosyası değil, atlandı.`, 'warning');
             return;
         }
+        const path = resolveDrivePath(file.name, rootPath);
         bulkItems.push({
             file,
             fileName: file.name,
-            path: resolveDrivePath(file.name, rootPath),
+            path,
+            isMerged: !!path, // dosya adı bölge/yıl/çeyrek desenine uyuyorsa muhtemelen birleştirilmiş rapordur
             status: null,
             message: ''
         });
@@ -119,11 +119,28 @@ driveBulkFiles.addEventListener('change', () => {
     renderBulkTable();
 });
 
+driveBulkSelectAllMerged.addEventListener('change', () => {
+    bulkItems.forEach(item => { item.isMerged = driveBulkSelectAllMerged.checked; });
+    renderBulkTable();
+});
+
+function updateSelectAllMergedState() {
+    if (bulkItems.length === 0) {
+        driveBulkSelectAllMerged.checked = false;
+        driveBulkSelectAllMerged.indeterminate = false;
+        return;
+    }
+    const mergedCount = bulkItems.filter(i => i.isMerged).length;
+    driveBulkSelectAllMerged.checked = mergedCount === bulkItems.length;
+    driveBulkSelectAllMerged.indeterminate = mergedCount > 0 && mergedCount < bulkItems.length;
+}
+
 function renderBulkTable() {
     driveBulkTableBody.innerHTML = '';
 
     if (bulkItems.length === 0) {
         driveBulkTableBody.appendChild(driveBulkEmptyRow);
+        updateSelectAllMergedState();
         return;
     }
 
@@ -147,6 +164,19 @@ function renderBulkTable() {
         pathTd.appendChild(pathInput);
         tr.appendChild(pathTd);
 
+        const mergedTd = document.createElement('td');
+        mergedTd.className = 'text-center';
+        const mergedCheck = document.createElement('input');
+        mergedCheck.type = 'checkbox';
+        mergedCheck.className = 'form-check-input';
+        mergedCheck.checked = item.isMerged;
+        mergedCheck.addEventListener('change', () => {
+            bulkItems[idx].isMerged = mergedCheck.checked;
+            updateSelectAllMergedState();
+        });
+        mergedTd.appendChild(mergedCheck);
+        tr.appendChild(mergedTd);
+
         const statusTd = document.createElement('td');
         statusTd.innerHTML = renderBulkStatus(item);
         tr.appendChild(statusTd);
@@ -165,6 +195,8 @@ function renderBulkTable() {
 
         driveBulkTableBody.appendChild(tr);
     });
+
+    updateSelectAllMergedState();
 }
 
 function renderBulkStatus(item) {
@@ -175,15 +207,12 @@ function renderBulkStatus(item) {
 
 driveBulkUploadBtn.addEventListener('click', async () => {
     if (bulkItems.length === 0) { showToast('Lütfen en az bir PDF dosyası seçin.', 'warning'); return; }
-    if (!driveBulkWebPath.value.trim()) { showToast('Site alt yolu (webPath) zorunludur.', 'warning'); return; }
 
     const formData = new FormData();
-    formData.append('WebPath', driveBulkWebPath.value.trim());
-    if (driveBulkExtraParams.value.trim()) formData.append('ExtraParams', driveBulkExtraParams.value.trim());
-    formData.append('IsMergedVersion', driveBulkIsMergedVersion.checked ? 'true' : 'false');
     bulkItems.forEach((item, idx) => {
         formData.append(`Items[${idx}].File`, item.file);
         formData.append(`Items[${idx}].Path`, item.path);
+        formData.append(`Items[${idx}].IsMergedVersion`, item.isMerged ? 'true' : 'false');
     });
 
     setBulkUploading(true);

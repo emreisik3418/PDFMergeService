@@ -9,6 +9,7 @@ public class SharePointSettings
     public string? Password { get; set; }
     public List<WebPathOption> WebPathOptions { get; set; } = new();
     public List<WebPathOption> BulkRootPathOptions { get; set; } = new();
+    public string BulkWebPath { get; set; } = string.Empty;
 }
 
 public class WebPathOption
