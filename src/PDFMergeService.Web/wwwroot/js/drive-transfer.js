@@ -87,7 +87,7 @@ driveBulkRootPath.addEventListener('change', () => {
 
 function resolveDrivePath(fileName, rootPath) {
     const base = fileName.replace(/\.pdf$/i, '');
-    const regionMatch = base.match(/([^\-–—]+?)\s*B[Öö]LGE\s+M[Üü]D[Üü]RL[Üü][Ğğ][Üü]/i);
+    const regionMatch = base.match(/([^\-–—]+?)\s*(?:B[Öö]LGE\s+M[Üü]D[Üü]RL[Üü][Ğğ][Üü]|KURUMSAL\s+ŞUBES[İi]|T[İi]CAR[İi]\s+ŞUBES[İi]|ÖZEL)/i);
     const yearMatch = base.match(/\b(20\d{2})\b/);
     const quarterMatch = base.match(/(\d)\s*\.?\s*[Çç]eyrek/);
 
