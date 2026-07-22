@@ -21,7 +21,7 @@ public class DriveTransferService : IDriveTransferService
 
     public async Task<DriveUploadResult> UploadAsync(DriveUploadRequest request)
     {
-        var binding = new BasicHttpBinding(BasicHttpSecurityMode.Transport)
+        var binding = new BasicHttpBinding(BasicHttpSecurityMode.None)
         {
             MaxReceivedMessageSize = 100 * 1024 * 1024,
             MaxBufferSize = 100 * 1024 * 1024
