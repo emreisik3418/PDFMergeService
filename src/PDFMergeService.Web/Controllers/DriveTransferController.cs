@@ -51,9 +51,12 @@ public class DriveTransferController : Controller
     }
 
     [HttpPost("/drive-transfer/upload-bulk")]
-    public async Task<IActionResult> UploadBulk([FromForm] DriveTransferBulkUploadViewModel model)
+    public async Task<IActionResult> UploadBulk(
+        List<IFormFile> files,
+        [FromForm] List<string> paths,
+        [FromForm] List<bool> isMergedVersions)
     {
-        if (model.Items == null || model.Items.Count == 0)
+        if (files == null || files.Count == 0)
             return BadRequest(new { error = "Lütfen en az bir PDF dosyası seçin." });
 
         if (string.IsNullOrWhiteSpace(_sharePointSettings.BulkWebPath))
@@ -62,26 +65,29 @@ public class DriveTransferController : Controller
         var webPath = _sharePointSettings.BulkWebPath.Trim();
         var results = new List<object>();
 
-        foreach (var item in model.Items)
+        for (var i = 0; i < files.Count; i++)
         {
-            var fileName = item.File?.FileName ?? "(bilinmiyor)";
+            var file = files[i];
+            var path = i < paths.Count ? paths[i] : string.Empty;
+            var isMerged = i < isMergedVersions.Count && isMergedVersions[i];
+            var fileName = file?.FileName ?? "(bilinmiyor)";
 
-            if (item.File == null || item.File.Length == 0)
+            if (file == null || file.Length == 0)
             {
-                results.Add(new { fileName, path = item.Path, success = false, message = "Dosya boş veya okunamadı." });
+                results.Add(new { fileName, path, success = false, message = "Dosya boş veya okunamadı." });
                 continue;
             }
 
-            if (string.IsNullOrWhiteSpace(item.Path))
+            if (string.IsNullOrWhiteSpace(path))
             {
-                results.Add(new { fileName, path = item.Path, success = false, message = "Hedef klasör (path) boş, lütfen elle girin." });
+                results.Add(new { fileName, path, success = false, message = "Hedef klasör (path) boş, lütfen elle girin." });
                 continue;
             }
 
             var (success, message) = await UploadOneAsync(
-                item.File, webPath, item.Path.Trim(), item.File.FileName, extraParamsRaw: null, item.IsMergedVersion);
+                file, webPath, path.Trim(), file.FileName, extraParamsRaw: null, isMerged);
 
-            results.Add(new { fileName, path = item.Path, success, message });
+            results.Add(new { fileName, path, success, message });
         }
 
         return Ok(new { results });

@@ -209,10 +209,10 @@ driveBulkUploadBtn.addEventListener('click', async () => {
     if (bulkItems.length === 0) { showToast('Lütfen en az bir PDF dosyası seçin.', 'warning'); return; }
 
     const formData = new FormData();
-    bulkItems.forEach((item, idx) => {
-        formData.append(`Items[${idx}].File`, item.file);
-        formData.append(`Items[${idx}].Path`, item.path);
-        formData.append(`Items[${idx}].IsMergedVersion`, item.isMerged ? 'true' : 'false');
+    bulkItems.forEach(item => {
+        formData.append('files', item.file);
+        formData.append('paths', item.path);
+        formData.append('isMergedVersions', item.isMerged ? 'true' : 'false');
     });
 
     setBulkUploading(true);
