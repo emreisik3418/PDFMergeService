@@ -1,9 +1,9 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using PDFMergeService.Core.Settings;
 using PDFMergeService.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<PdfSettings>(
     builder.Configuration.GetSection("PdfSettings"));
@@ -11,7 +11,35 @@ builder.Services.Configure<PdfSettings>(
 builder.Services.Configure<SharePointSettings>(
     builder.Configuration.GetSection("SharePointSettings"));
 
+builder.Services.Configure<LdapSettings>(
+    builder.Configuration.GetSection("Ldap"));
+
+builder.Services.Configure<ExadataSettings>(
+    builder.Configuration.GetSection("Exadata"));
+
+builder.Services.Configure<MockAuthSettings>(
+    builder.Configuration.GetSection("MockAuth"));
+
 builder.Services.AddPdfServices();
+builder.Services.AddAuthServices(builder.Configuration);
+
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new AuthorizeFilter());
+});
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/hesap/giris";
+        options.AccessDeniedPath = "/hesap/giris";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.Cookie.Name = "ReportDeck.Auth";
+        options.Cookie.HttpOnly = true;
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
 {
@@ -29,6 +57,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
