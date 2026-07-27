@@ -361,6 +361,12 @@ mergeBtn.addEventListener('click', async () => {
         showToast('PDF birleştirildi. Önizlemeyi inceleyip indirebilirsiniz.', 'success');
         showReopenBtn(true);
 
+        fetch('/pdf-merge/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileCount: orderedFiles.length, pageCount: outDoc.getPageCount() })
+        }).catch(() => {});
+
     } catch (e) {
         console.error(e);
         showToast('Birleştirme başarısız. Dosyalardan biri bozuk veya şifreli olabilir.', 'danger');

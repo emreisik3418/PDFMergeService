@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using PDFMergeService.Core.Enums;
 using PDFMergeService.Core.Interfaces;
 using PDFMergeService.Core.Models;
 using PDFMergeService.Core.Settings;
@@ -11,15 +12,18 @@ public class DriveTransferController : Controller
 {
     private readonly IDriveTransferService _driveTransferService;
     private readonly SharePointSettings _sharePointSettings;
+    private readonly IActivityLogService _activityLogService;
     private readonly ILogger<DriveTransferController> _logger;
 
     public DriveTransferController(
         IDriveTransferService driveTransferService,
         IOptions<SharePointSettings> sharePointSettings,
+        IActivityLogService activityLogService,
         ILogger<DriveTransferController> logger)
     {
         _driveTransferService = driveTransferService;
         _sharePointSettings = sharePointSettings.Value;
+        _activityLogService = activityLogService;
         _logger = logger;
     }
 
@@ -44,6 +48,14 @@ public class DriveTransferController : Controller
         var (success, message) = await UploadOneAsync(
             model.File, model.WebPath.Trim(), model.Path.Trim(), fileName, model.ExtraParams, model.IsMergedVersion);
 
+        await _activityLogService.LogAsync(new ActivityLogEntry
+        {
+            Username = User.Identity?.Name ?? "unknown",
+            EventType = ActivityEventType.DriveTransfer,
+            Detail = $"{fileName} → {model.WebPath.Trim()}/{model.Path.Trim()}",
+            Success = success
+        });
+
         if (!success)
             return StatusCode(502, new { error = message });
 
@@ -64,6 +76,7 @@ public class DriveTransferController : Controller
 
         var webPath = _sharePointSettings.BulkWebPath.Trim();
         var results = new List<object>();
+        var allSuccess = true;
 
         for (var i = 0; i < files.Count; i++)
         {
@@ -75,12 +88,14 @@ public class DriveTransferController : Controller
             if (file == null || file.Length == 0)
             {
                 results.Add(new { fileName, path, success = false, message = "Dosya boş veya okunamadı." });
+                allSuccess = false;
                 continue;
             }
 
             if (string.IsNullOrWhiteSpace(path))
             {
                 results.Add(new { fileName, path, success = false, message = "Hedef klasör (path) boş, lütfen elle girin." });
+                allSuccess = false;
                 continue;
             }
 
@@ -88,7 +103,16 @@ public class DriveTransferController : Controller
                 file, webPath, path.Trim(), file.FileName, extraParamsRaw: null, isMerged);
 
             results.Add(new { fileName, path, success, message });
+            allSuccess = allSuccess && success;
         }
+
+        await _activityLogService.LogAsync(new ActivityLogEntry
+        {
+            Username = User.Identity?.Name ?? "unknown",
+            EventType = ActivityEventType.DriveTransfer,
+            Detail = $"{files.Count} dosya → {webPath} (toplu)",
+            Success = allSuccess
+        });
 
         return Ok(new { results });
     }

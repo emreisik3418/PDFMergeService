@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using Microsoft.AspNetCore.Mvc;
+using PDFMergeService.Core.Enums;
 using PDFMergeService.Core.Interfaces;
 using PDFMergeService.Core.Models;
 using PDFMergeService.Web.ViewModels.FolderMerge;
@@ -12,17 +13,20 @@ public class FolderMergeController : Controller
     private readonly IFolderScanService _folderScanService;
     private readonly IPdfMergeService _pdfMergeService;
     private readonly IPdfFooterService _pdfFooterService;
+    private readonly IActivityLogService _activityLogService;
     private readonly ILogger<FolderMergeController> _logger;
 
     public FolderMergeController(
         IFolderScanService folderScanService,
         IPdfMergeService pdfMergeService,
         IPdfFooterService pdfFooterService,
+        IActivityLogService activityLogService,
         ILogger<FolderMergeController> logger)
     {
         _folderScanService = folderScanService;
         _pdfMergeService = pdfMergeService;
         _pdfFooterService = pdfFooterService;
+        _activityLogService = activityLogService;
         _logger = logger;
     }
 
@@ -126,6 +130,15 @@ public class FolderMergeController : Controller
 
         zipStream.Position = 0;
         var zipName = $"TopluBirlestirme_{today}.zip";
+
+        await _activityLogService.LogAsync(new ActivityLogEntry
+        {
+            Username = User.Identity?.Name ?? "unknown",
+            EventType = ActivityEventType.FolderMerge,
+            Detail = $"{model.Folders.Count} klasör, {model.Folders.Sum(f => f.PdfFiles?.Count ?? 0)} dosya",
+            Success = true
+        });
+
         return File(zipStream.ToArray(), "application/zip", zipName);
     }
 

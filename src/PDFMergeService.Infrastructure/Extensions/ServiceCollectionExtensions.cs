@@ -15,6 +15,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPdfFooterService, PdfFooterService>();
         services.AddScoped<IFolderScanService, FolderScanService>();
         services.AddScoped<IDriveTransferService, DriveTransferService>();
+
+        // Singleton: paylaşılan log dosyasına yazımı tek instance üzerinden serileştirmek için
+        // (diğer servislerin Scoped olmasının aksine).
+        services.AddSingleton<IActivityLogService, FileActivityLogService>();
         return services;
     }
 

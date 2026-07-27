@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PDFMergeService.Core.Enums;
 using PDFMergeService.Core.Interfaces;
 using PDFMergeService.Core.Models;
 using PDFMergeService.Web.ViewModels.Account;
@@ -14,15 +15,18 @@ public class AccountController : Controller
 {
     private readonly IAdAuthenticationService _adAuthenticationService;
     private readonly IUserAuthorizationRepository _userAuthorizationRepository;
+    private readonly IActivityLogService _activityLogService;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         IAdAuthenticationService adAuthenticationService,
         IUserAuthorizationRepository userAuthorizationRepository,
+        IActivityLogService activityLogService,
         ILogger<AccountController> logger)
     {
         _adAuthenticationService = adAuthenticationService;
         _userAuthorizationRepository = userAuthorizationRepository;
+        _activityLogService = activityLogService;
         _logger = logger;
     }
 
@@ -78,6 +82,13 @@ public class AccountController : Controller
             new AuthenticationProperties { IsPersistent = true });
 
         _logger.LogInformation("Başarılı giriş: {Username}", model.Username);
+        await _activityLogService.LogAsync(new ActivityLogEntry
+        {
+            Username = model.Username,
+            EventType = ActivityEventType.Login,
+            Detail = authorizedUser.Role ?? "User",
+            Success = true
+        });
 
         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return Redirect(model.ReturnUrl);
@@ -89,7 +100,20 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        var username = User.Identity?.Name;
+
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        if (!string.IsNullOrEmpty(username))
+        {
+            await _activityLogService.LogAsync(new ActivityLogEntry
+            {
+                Username = username,
+                EventType = ActivityEventType.Logout,
+                Success = true
+            });
+        }
+
         return RedirectToAction(nameof(Login));
     }
 }

@@ -23,6 +23,9 @@ builder.Services.Configure<MockAuthSettings>(
 builder.Services.Configure<AuthorizedUsersSettings>(
     builder.Configuration.GetSection("AuthorizedUsers"));
 
+builder.Services.Configure<ActivityLogSettings>(
+    builder.Configuration.GetSection("ActivityLog"));
+
 builder.Services.AddPdfServices();
 builder.Services.AddAuthServices(builder.Configuration);
 
