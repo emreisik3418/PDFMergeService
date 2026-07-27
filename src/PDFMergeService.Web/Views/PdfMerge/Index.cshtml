@@ -8,8 +8,8 @@
     <div class="col-lg-7">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-semibold text-primary">
-                    <i class="bi bi-files me-2"></i>PDF Dosyaları
+                <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
+                    <span class="card-header-icon"><i class="bi bi-files"></i></span>PDF Dosyaları
                 </h5>
             </div>
             <div class="card-body p-4">
@@ -69,8 +69,8 @@
     <div class="col-lg-5">
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-semibold text-primary">
-                    <i class="bi bi-sliders me-2"></i>Footer Ayarları
+                <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
+                    <span class="card-header-icon"><i class="bi bi-sliders"></i></span>Footer Ayarları
                 </h5>
             </div>
             <div class="card-body p-0">
@@ -193,12 +193,12 @@
 
         <!-- Çıktı Dosya Adı -->
         <div class="mb-3">
-            <label class="form-label fw-medium text-secondary small" for="outputFileName">
-                <i class="bi bi-file-earmark-text me-1"></i>Çıktı Dosya Adı <span class="text-muted fw-normal">(opsiyonel)</span>
-            </label>
-            <div class="input-group input-group-sm">
-                <input type="text" class="form-control" id="outputFileName"
-                       placeholder="Örn: rapor_2024" maxlength="100" />
+            <div class="input-group">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="outputFileName"
+                           placeholder="Örn: rapor_2024" maxlength="100" />
+                    <label for="outputFileName"><i class="bi bi-file-earmark-text me-1"></i>Çıktı Dosya Adı (opsiyonel)</label>
+                </div>
                 <span class="input-group-text text-muted">.pdf</span>
             </div>
             <div class="form-text">Boş bırakılırsa varsayılan isim kullanılır.</div>

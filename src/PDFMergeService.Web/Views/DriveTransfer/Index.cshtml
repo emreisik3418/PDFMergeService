@@ -7,8 +7,8 @@
     <div class="col-lg-9">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-semibold text-primary">
-                    <i class="bi bi-cloud-upload me-2"></i>SharePoint'e Dosya Aktar
+                <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
+                    <span class="card-header-icon"><i class="bi bi-cloud-upload"></i></span>SharePoint'e Dosya Aktar
                 </h5>
             </div>
             <div class="card-body p-4">
@@ -43,14 +43,16 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Site Alt Yolu (webPath)</label>
-                            <select id="driveWebPath" class="form-select">
-                                <option value="">Seçiniz...</option>
-                                @foreach (var opt in Model.WebPathOptions)
-                                {
-                                    <option value="@opt.Value">@opt.Label</option>
-                                }
-                            </select>
+                            <div class="form-floating">
+                                <select id="driveWebPath" class="form-select">
+                                    <option value="">Seçiniz...</option>
+                                    @foreach (var opt in Model.WebPathOptions)
+                                    {
+                                        <option value="@opt.Value">@opt.Label</option>
+                                    }
+                                </select>
+                                <label for="driveWebPath">Site Alt Yolu (webPath)</label>
+                            </div>
                             @if (!Model.WebPathOptions.Any())
                             {
                                 <div class="form-text text-warning">
@@ -59,15 +61,19 @@
                             }
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Hedef Klasör (path)</label>
-                            <input type="text" id="drivePath" class="form-control"
-                                   placeholder="/Belgeler/2026" />
+                            <div class="form-floating">
+                                <input type="text" id="drivePath" class="form-control"
+                                       placeholder="/Belgeler/2026" />
+                                <label for="drivePath">Hedef Klasör (path)</label>
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Dosya Adı <span class="text-muted small">(opsiyonel, boşsa seçilen dosya adı kullanılır)</span></label>
-                        <input type="text" id="driveFileName" class="form-control" placeholder="rapor.pdf" />
+                        <div class="form-floating">
+                            <input type="text" id="driveFileName" class="form-control" placeholder="rapor.pdf" />
+                            <label for="driveFileName">Dosya Adı <span class="text-muted small">(opsiyonel)</span></label>
+                        </div>
                     </div>
 
                     <div class="mb-3 form-check">
@@ -81,9 +87,11 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-medium">Ek Parametreler <span class="text-muted small">(opsiyonel)</span></label>
-                        <textarea id="driveExtraParams" class="form-control" rows="2"
-                                  placeholder="AccIsMobile|false|"></textarea>
+                        <div class="form-floating">
+                            <textarea id="driveExtraParams" class="form-control" style="height: 5rem"
+                                      placeholder="AccIsMobile|false|"></textarea>
+                            <label for="driveExtraParams">Ek Parametreler <span class="text-muted small">(opsiyonel)</span></label>
+                        </div>
                         <div class="form-text">
                             Her satıra bir <code>Anahtar|Değer|</code> girin. <code>Title</code> ve <code>ACCIsMergedVersion</code>
                             otomatik eklenir, tekrar girmenize gerek yok.
@@ -115,14 +123,16 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Klasör Kökü (rapor tipi)</label>
-                        <select id="driveBulkRootPath" class="form-select">
-                            <option value="">Seçiniz...</option>
-                            @foreach (var opt in Model.BulkRootPathOptions)
-                            {
-                                <option value="@opt.Value">@opt.Label</option>
-                            }
-                        </select>
+                        <div class="form-floating">
+                            <select id="driveBulkRootPath" class="form-select">
+                                <option value="">Seçiniz...</option>
+                                @foreach (var opt in Model.BulkRootPathOptions)
+                                {
+                                    <option value="@opt.Value">@opt.Label</option>
+                                }
+                            </select>
+                            <label for="driveBulkRootPath">Klasör Kökü (rapor tipi)</label>
+                        </div>
                         @if (!Model.BulkRootPathOptions.Any())
                         {
                             <div class="form-text text-warning">

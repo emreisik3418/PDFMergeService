@@ -125,3 +125,121 @@ body {
 .form-check-input:focus {
     box-shadow: 0 0 0 0.1rem #fff, 0 0 0 0.25rem rgba(220, 0, 5, .35);
 }
+
+/* ── App navbar: segmented pill tabs (login sayfasındaki gradient/hüner burada da) ── */
+.app-navbar {
+    background: linear-gradient(120deg, #f5000a 0%, #dc0005 55%, #a80003 100%);
+}
+
+.app-nav-pills {
+    gap: 0.25rem;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 0.3rem;
+    border-radius: 12px;
+}
+
+.app-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 500;
+    border-radius: 9px;
+    padding: 0.5rem 1rem !important;
+    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    white-space: nowrap;
+}
+
+.app-nav-link:hover {
+    color: #fff !important;
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.app-nav-link.active {
+    color: #dc0005 !important;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
+.app-user-badge {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 9px;
+    padding: 0.4rem 0.75rem;
+}
+
+.app-logout-btn {
+    border-radius: 9px;
+}
+
+/* ── Card header ikon rozeti (login brand logosu ile aynı dil) ── */
+.card-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9px;
+    background: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary);
+    margin-right: 0.6rem;
+    font-size: 1rem;
+    vertical-align: middle;
+}
+
+/* ── Modern form controls: yuvarlak köşe, yumuşak geçiş, net hover/focus ── */
+.form-control,
+.form-select {
+    border-radius: 10px;
+    border-color: #dee2e6;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control:hover:not(:disabled):not(:focus),
+.form-select:hover:not(:disabled):not(:focus) {
+    border-color: #b9bfc5;
+}
+
+.form-control-color {
+    border-radius: 8px;
+}
+
+/* Floating label: placeholder yerine label yukarı kayar, seçili olan netleşir */
+.form-floating > label {
+    color: #6c757d;
+}
+
+.form-floating > .form-control:focus,
+.form-floating > .form-control:not(:placeholder-shown),
+.form-floating > .form-select {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+    color: var(--bs-primary);
+    opacity: 0.85;
+    transform: scale(0.82) translateY(0.1rem) translateX(0.15rem);
+}
+
+.input-group > .form-floating:not(:first-child):not(:last-child) > .form-control,
+.input-group > .form-floating:not(:first-child):not(:last-child) > .form-select {
+    border-radius: 0;
+}
+
+/* Sayfa geçişlerinde yumuşak giriş animasyonu (login-fade-in ile aynı ruh) */
+.app-content-fade {
+    animation: app-fade-in 0.35s ease both;
+}
+
+@keyframes app-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Kart hover: hafif kalkma efekti */
+.card.shadow-sm {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}

@@ -10,7 +10,7 @@
 </head>
 <body class="bg-light">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center" asp-controller="PdfMerge" asp-action="Index">
                 <svg width="26" height="26" viewBox="0 0 100 100" class="me-2" aria-hidden="true" focusable="false">
@@ -27,44 +27,44 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav app-nav-pills mx-lg-auto my-2 my-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PdfMerge" ? "active" : "")"
+                        <a class="nav-link app-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PdfMerge" ? "active" : "")"
                            asp-controller="PdfMerge" asp-action="Index">
-                            <i class="bi bi-files me-1"></i>PDF Birleştir
+                            <i class="bi bi-files"></i>PDF Birleştir
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "FolderMerge" ? "active" : "")"
+                        <a class="nav-link app-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "FolderMerge" ? "active" : "")"
                            asp-controller="FolderMerge" asp-action="Index">
-                            <i class="bi bi-folder2-open me-1"></i>Klasör Birleştirme
+                            <i class="bi bi-folder2-open"></i>Klasör Birleştirme
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DriveTransfer" ? "active" : "")"
+                        <a class="nav-link app-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DriveTransfer" ? "active" : "")"
                            asp-controller="DriveTransfer" asp-action="Index">
-                            <i class="bi bi-cloud-upload me-1"></i>Drive Aktarım
+                            <i class="bi bi-cloud-upload"></i>Drive Aktarım
                         </a>
                     </li>
                     @if (User.IsInRole("Admin"))
                     {
                         <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ActivityLog" ? "active" : "")"
+                            <a class="nav-link app-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ActivityLog" ? "active" : "")"
                                asp-controller="ActivityLog" asp-action="Index">
-                                <i class="bi bi-clock-history me-1"></i>Aktivite Logları
+                                <i class="bi bi-clock-history"></i>Aktivite Logları
                             </a>
                         </li>
                     }
                 </ul>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <ul class="navbar-nav ms-3">
-                        <li class="nav-item d-flex align-items-center text-white-50 small me-2">
+                    <ul class="navbar-nav ms-lg-3 align-items-lg-center">
+                        <li class="nav-item d-flex align-items-center app-user-badge small me-2 mb-2 mb-lg-0">
                             <i class="bi bi-person-circle me-1"></i>@User.Identity!.Name
                         </li>
                         <li class="nav-item">
                             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-light">
+                                <button type="submit" class="btn btn-sm btn-outline-light app-logout-btn">
                                     <i class="bi bi-box-arrow-right me-1"></i>Çıkış
                                 </button>
                             </form>
@@ -75,7 +75,7 @@
         </div>
     </nav>
 
-    <div class="container py-4">
+    <div class="container py-4 app-content-fade">
         @RenderBody()
     </div>
 

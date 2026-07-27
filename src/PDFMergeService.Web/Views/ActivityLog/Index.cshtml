@@ -26,35 +26,41 @@
 
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white border-bottom py-3">
-        <h5 class="mb-0 fw-semibold text-primary">
-            <i class="bi bi-clock-history me-2"></i>Aktivite Logları
+        <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
+            <span class="card-header-icon"><i class="bi bi-clock-history"></i></span>Aktivite Logları
         </h5>
     </div>
     <div class="card-body p-4">
 
         <form method="get" asp-action="Index" class="row g-2 align-items-end mb-4">
-            <div class="col-auto">
-                <label class="form-label small text-muted mb-1">Başlangıç</label>
-                <input type="date" name="from" class="form-control form-control-sm"
-                       value="@Model.From?.ToString("yyyy-MM-dd")" />
+            <div class="col-auto" style="width: 11rem;">
+                <div class="form-floating">
+                    <input type="date" name="from" id="fromDate" class="form-control"
+                           value="@Model.From?.ToString("yyyy-MM-dd")" />
+                    <label for="fromDate">Başlangıç</label>
+                </div>
+            </div>
+            <div class="col-auto" style="width: 11rem;">
+                <div class="form-floating">
+                    <input type="date" name="to" id="toDate" class="form-control"
+                           value="@Model.To?.ToString("yyyy-MM-dd")" />
+                    <label for="toDate">Bitiş</label>
+                </div>
+            </div>
+            <div class="col-auto" style="width: 14rem;">
+                <div class="form-floating">
+                    <input type="text" name="username" id="usernameFilter" class="form-control"
+                           placeholder="kullanıcı adı" value="@Model.Username" />
+                    <label for="usernameFilter">Kullanıcı</label>
+                </div>
             </div>
             <div class="col-auto">
-                <label class="form-label small text-muted mb-1">Bitiş</label>
-                <input type="date" name="to" class="form-control form-control-sm"
-                       value="@Model.To?.ToString("yyyy-MM-dd")" />
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-muted mb-1">Kullanıcı</label>
-                <input type="text" name="username" class="form-control form-control-sm"
-                       placeholder="kullanıcı adı" value="@Model.Username" />
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-sm px-3">
+                <button type="submit" class="btn btn-primary px-3">
                     <i class="bi bi-search me-1"></i>Filtrele
                 </button>
             </div>
             <div class="col-auto">
-                <a asp-action="Index" class="btn btn-outline-secondary btn-sm px-3">Temizle</a>
+                <a asp-action="Index" class="btn btn-outline-secondary px-3">Temizle</a>
             </div>
         </form>
 

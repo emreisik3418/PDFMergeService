@@ -7,8 +7,8 @@
     <div class="col-lg-7">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-semibold text-primary">
-                    <i class="bi bi-folder2-open me-2"></i>Ana Klasör Seçimi
+                <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
+                    <span class="card-header-icon"><i class="bi bi-folder2-open"></i></span>Ana Klasör Seçimi
                 </h5>
             </div>
             <div class="card-body p-4">
@@ -18,8 +18,11 @@
                     <span class="input-group-text bg-white">
                         <i class="bi bi-folder text-primary"></i>
                     </span>
-                    <input type="text" id="rootPath" class="form-control"
-                           placeholder="\\SunucuAdı\PaylaşımAdı\Klasör" />
+                    <div class="form-floating">
+                        <input type="text" id="rootPath" class="form-control"
+                               placeholder="\\SunucuAdı\PaylaşımAdı\Klasör" />
+                        <label for="rootPath">Klasör Yolu</label>
+                    </div>
                     <button class="btn btn-primary px-4" id="scanBtn">
                         <i class="bi bi-search me-2"></i>Tara
                     </button>
@@ -93,8 +96,8 @@
     <div class="col-lg-5">
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-semibold text-primary">
-                    <i class="bi bi-sliders me-2"></i>Footer Ayarları
+                <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
+                    <span class="card-header-icon"><i class="bi bi-sliders"></i></span>Footer Ayarları
                 </h5>
             </div>
             <div class="card-body p-0">
