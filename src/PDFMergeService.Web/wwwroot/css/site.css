@@ -235,11 +235,6 @@ body {
 }
 
 @keyframes app-fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Kart hover: hafif kalkma efekti */
-.card.shadow-sm {
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
