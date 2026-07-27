@@ -234,12 +234,3 @@ body {
     border-radius: 0;
 }
 
-/* Sayfa geçişlerinde yumuşak giriş animasyonu (login-fade-in ile aynı ruh) */
-.app-content-fade {
-    animation: app-fade-in 0.35s ease both;
-}
-
-@keyframes app-fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
