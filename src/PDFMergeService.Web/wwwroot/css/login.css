@@ -1,0 +1,182 @@
+.login-page {
+    min-height: 100vh;
+    display: flex;
+}
+
+/* ── Brand panel ─────────────────────────────────────────────── */
+.login-brand-panel {
+    position: relative;
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 4rem;
+    color: #fff;
+    background: linear-gradient(135deg, #f5000a 0%, #dc0005 45%, #7a0002 100%);
+    overflow: hidden;
+}
+
+.login-brand-panel::before,
+.login-brand-panel::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.login-brand-panel::before {
+    width: 26rem;
+    height: 26rem;
+    top: -8rem;
+    right: -8rem;
+}
+
+.login-brand-panel::after {
+    width: 18rem;
+    height: 18rem;
+    bottom: -6rem;
+    left: -4rem;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.login-brand-content {
+    position: relative;
+    z-index: 1;
+    max-width: 26rem;
+}
+
+.login-brand-logo {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 1.75rem;
+}
+
+.login-brand-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.login-brand-tagline {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.login-brand-features {
+    margin-top: 2.5rem;
+    list-style: none;
+    padding: 0;
+}
+
+.login-brand-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.92rem;
+    margin-bottom: 0.85rem;
+}
+
+.login-brand-features i {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Form panel ──────────────────────────────────────────────── */
+.login-form-panel {
+    flex: 1 1 55%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    padding: 2rem;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    animation: login-fade-in 0.45s ease both;
+}
+
+@keyframes login-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.login-card-header {
+    display: none;
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.login-card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.login-card-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.login-card .card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.08);
+}
+
+.login-card .form-floating > .form-control {
+    border-radius: 10px;
+}
+
+.login-card .form-floating {
+    position: relative;
+}
+
+#password {
+    padding-right: 2.75rem;
+}
+
+.login-password-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 0.9rem;
+    color: #6c757d;
+    background: transparent;
+    border: none;
+    z-index: 5;
+}
+
+.login-password-toggle:hover {
+    color: #495057;
+}
+
+.login-submit-btn {
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+}
+
+.login-footer-note {
+    text-align: center;
+    color: #adb5bd;
+    font-size: 0.8rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .login-brand-panel {
+        display: none;
+    }
+
+    .login-card-header {
+        display: block;
+    }
+}

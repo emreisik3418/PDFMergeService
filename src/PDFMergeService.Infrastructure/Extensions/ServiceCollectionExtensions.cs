@@ -21,15 +21,27 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAuthServices(this IServiceCollection services, IConfiguration configuration)
     {
         bool useMockProviders = configuration.GetValue<bool>("Authentication:UseMockProviders");
+        bool useConfigAuthorization = configuration.GetValue<bool>("Authentication:UseConfigAuthorization");
 
         if (useMockProviders)
         {
             services.AddScoped<IAdAuthenticationService, MockAdAuthenticationService>();
-            services.AddScoped<IUserAuthorizationRepository, MockUserAuthorizationRepository>();
         }
         else
         {
             services.AddScoped<IAdAuthenticationService, ActiveDirectoryAuthenticationService>();
+        }
+
+        if (useConfigAuthorization)
+        {
+            services.AddScoped<IUserAuthorizationRepository, ConfigUserAuthorizationRepository>();
+        }
+        else if (useMockProviders)
+        {
+            services.AddScoped<IUserAuthorizationRepository, MockUserAuthorizationRepository>();
+        }
+        else
+        {
             services.AddScoped<IUserAuthorizationRepository, OracleUserAuthorizationRepository>();
         }
 

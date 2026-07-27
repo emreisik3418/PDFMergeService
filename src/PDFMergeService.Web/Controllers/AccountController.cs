@@ -26,13 +26,13 @@ public class AccountController : Controller
         _logger = logger;
     }
 
-    [HttpGet("/hesap/giris")]
+    [HttpGet("/account/login")]
     public IActionResult Login(string? returnUrl = null)
     {
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
 
-    [HttpPost("/hesap/giris")]
+    [HttpPost("/account/login")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
@@ -85,7 +85,7 @@ public class AccountController : Controller
         return RedirectToAction("Index", "PdfMerge");
     }
 
-    [HttpPost("/hesap/cikis")]
+    [HttpPost("/account/logout")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {

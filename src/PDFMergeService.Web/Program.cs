@@ -20,6 +20,9 @@ builder.Services.Configure<ExadataSettings>(
 builder.Services.Configure<MockAuthSettings>(
     builder.Configuration.GetSection("MockAuth"));
 
+builder.Services.Configure<AuthorizedUsersSettings>(
+    builder.Configuration.GetSection("AuthorizedUsers"));
+
 builder.Services.AddPdfServices();
 builder.Services.AddAuthServices(builder.Configuration);
 
@@ -31,8 +34,8 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/hesap/giris";
-        options.AccessDeniedPath = "/hesap/giris";
+        options.LoginPath = "/account/login";
+        options.AccessDeniedPath = "/account/login";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         options.Cookie.Name = "ReportDeck.Auth";
