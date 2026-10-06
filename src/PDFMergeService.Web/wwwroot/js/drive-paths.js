@@ -21,7 +21,7 @@ const lists = {
         fields: {
             fileSuffix: 'KURUMSAL ŞUBESİ',
             folderSuffix: 'KURUMSAL ŞUBELER',
-            rootPath: '/performans/Kurumsal Şubeler',
+            rootPath: '/Kurumsal Şubeler',
             periodFolderFormat: '{YIL} - {CEYREK}. Çeyrek'
         },
         defaults: { periodFolderFormat: '{YIL} - {CEYREK}. Çeyrek' }

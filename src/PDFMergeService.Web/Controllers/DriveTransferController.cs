@@ -151,8 +151,20 @@ public class DriveTransferController : Controller
         }
     }
 
-    // Geçici: SharePoint tarafındaki hatanın ek parametrelerden kaynaklanıp kaynaklanmadığını ayırt etmek için
-    // yalnızca Title gönderiliyor. Kullanıcı parametreleri ve ACCIsMergedVersion test sonrası yeniden eklenecek.
-    private static string[] BuildExtraParams(string? raw, string title, bool isMergedVersion) =>
-        new[] { $"Title|{title}|" };
+    private static string[] BuildExtraParams(string? raw, string title, bool isMergedVersion)
+    {
+        var userParams = string.IsNullOrWhiteSpace(raw)
+            ? Enumerable.Empty<string>()
+            : raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                 .Where(line => !line.StartsWith("Title|", StringComparison.OrdinalIgnoreCase)
+                             && !line.StartsWith("ACCIsMergedVersion|", StringComparison.OrdinalIgnoreCase));
+
+        var autoParams = new[]
+        {
+            $"Title|{title}|",
+            $"ACCIsMergedVersion|{(isMergedVersion ? "true" : "false")}|"
+        };
+
+        return userParams.Concat(autoParams).ToArray();
+    }
 }
