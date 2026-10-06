@@ -63,7 +63,10 @@
 
     @if (User.Identity?.IsAuthenticated == true)
     {
-        <div class="offcanvas offcanvas-start app-side-menu" tabindex="-1" id="appSideMenu" aria-labelledby="appSideMenuLabel">
+        @* data-bs-scroll: panel açılırken sayfa kaydırması kilitlenmez; aksi halde Bootstrap kaydırma çubuğunun
+           yerine boşluk ekleyip tüm sayfayı yana kaydırıyor, açılış sarsıntılı görünüyordu. *@
+        <div class="offcanvas offcanvas-start app-side-menu" tabindex="-1" id="appSideMenu" aria-labelledby="appSideMenuLabel"
+             data-bs-scroll="true">
             <div class="offcanvas-header app-side-menu-header">
                 <h5 class="offcanvas-title fw-bold mb-0" id="appSideMenuLabel">ReportDeck</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
