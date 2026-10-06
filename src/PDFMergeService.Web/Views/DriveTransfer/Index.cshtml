@@ -124,7 +124,7 @@
                         <i class="bi bi-info-circle me-1"></i>
                         Dosya adındaki ifadeye göre ana klasör, bölge/şube klasörü ve dönem (yıl - çeyrek) klasörü
                         otomatik belirlenir; ör. <code>BAŞKENT KURUMSAL ŞUBESİ 2026 - 3.Çeyrek.pdf</code> →
-                        <code>Kurumsal Şubeler/BAŞKENT KURUMSAL ŞUBELER/2026 - 3.Çeyrek</code>.
+                        <code>Kurumsal Şubeler/BAŞKENT KURUMSAL ŞUBELER/2026 - 3. Çeyrek</code>.
                         @if (Model.BulkUploadRules.Any())
                         {
                             @Html.Raw("Tanınan ifadeler: " + string.Join(", ", Model.BulkUploadRules.Select(r => $"<strong>{System.Net.WebUtility.HtmlEncode(r.FileSuffix)}</strong>")) + ".")

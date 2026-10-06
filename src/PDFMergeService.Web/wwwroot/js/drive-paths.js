@@ -22,9 +22,9 @@ const lists = {
             fileSuffix: 'KURUMSAL ŞUBESİ',
             folderSuffix: 'KURUMSAL ŞUBELER',
             rootPath: '/performans/Kurumsal Şubeler',
-            periodFolderFormat: '{YIL} - {CEYREK}.Çeyrek'
+            periodFolderFormat: '{YIL} - {CEYREK}. Çeyrek'
         },
-        defaults: { periodFolderFormat: '{YIL} - {CEYREK}.Çeyrek' }
+        defaults: { periodFolderFormat: '{YIL} - {CEYREK}. Çeyrek' }
     }
 };
 

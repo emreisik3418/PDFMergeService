@@ -5,8 +5,8 @@
 //
 // "BAŞKENT KURUMSAL ŞUBESİ 2026 - 3.Çeyrek.pdf" + kural
 //   { fileSuffix: "KURUMSAL ŞUBESİ", folderSuffix: "KURUMSAL ŞUBELER",
-//     rootPath: "/performans/Kurumsal Şubeler", periodFolderFormat: "{YIL} - {CEYREK}.Çeyrek" }
-//   → "/performans/Kurumsal Şubeler/BAŞKENT KURUMSAL ŞUBELER/2026 - 3.Çeyrek"
+//     rootPath: "/performans/Kurumsal Şubeler", periodFolderFormat: "{YIL} - {CEYREK}. Çeyrek" }
+//   → "/performans/Kurumsal Şubeler/BAŞKENT KURUMSAL ŞUBELER/2026 - 3. Çeyrek"
 const DrivePathResolver = (() => {
 
     // Türkçe harfler (İ/i, I/ı, Ö/ö...) düz /i bayrağıyla katlanmadığı için her harf
