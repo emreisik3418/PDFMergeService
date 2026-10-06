@@ -360,6 +360,7 @@ mergeBtn.addEventListener('click', async () => {
         new bootstrap.Modal(document.getElementById('previewModal')).show();
 
         showToast('PDF birleştirildi. Önizlemeyi inceleyip indirebilirsiniz.', 'success');
+        window.ReportDeckFx?.celebrate();
         showReopenBtn(true);
 
         fetch('/pdf-merge/log', {

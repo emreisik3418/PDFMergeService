@@ -38,6 +38,7 @@ driveUploadBtn.addEventListener('click', async () => {
         }
 
         showToast(data.message || 'Dosya SharePoint\'e aktarıldı.', 'success');
+        window.ReportDeckFx?.celebrate();
     } catch {
         showToast('Sunucu bağlantısı hatası.', 'danger');
     } finally {
@@ -224,6 +225,7 @@ driveBulkUploadBtn.addEventListener('click', async () => {
 
         const successCount = results.filter(r => r.success).length;
         showToast(`${successCount}/${results.length} dosya başarıyla aktarıldı.`, successCount === results.length ? 'success' : 'warning');
+        if (results.length > 0 && successCount === results.length) window.ReportDeckFx?.celebrate();
     } catch {
         showToast('Sunucu bağlantısı hatası.', 'danger');
     } finally {

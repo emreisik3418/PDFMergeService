@@ -6,6 +6,11 @@
     "Items": [
       {
         "Type": "improvement",
+        "Title": "Yenilenen görünüm",
+        "Description": "Uygulama daha modern bir görünüme kavuştu: yeni yazı tipi, yumuşak geçişler ve animasyonlar. Form alanlarındaki etiketler artık girdiğiniz değerle çakışmıyor; alan seçildiğinde küçülüp üst kenara çıkıyor. PDF birleştirme ve Drive aktarımı başarıyla tamamlandığında küçük bir kutlama sizi bekliyor."
+      },
+      {
+        "Type": "improvement",
         "Title": "Yeni yan menü",
         "Description": "Sayfalar arasında geçiş için sol üstteki ☰ (menü) butonuna tıklayın; tüm sayfalar soldan açılan panelde Araçlar, Yönetim ve Bilgi başlıkları altında listelenir. Hangi sayfada olduğunuz üst çubukta logonun yanında yazar. Menü butonundaki sarı nokta, henüz görmediğiniz bir yenilik olduğunu gösterir."
       },

@@ -337,24 +337,33 @@ body {
     border-radius: 8px;
 }
 
-/* Floating label: placeholder yerine label yukarı kayar, seçili olan netleşir */
+/* Floating label: alan boşken placeholder gibi ortada durur; odakta / doluyken küçülüp
+   üst kenara çıkar ve değerle çakışmaz. Odakta marka rengi, sadece doluyken gri. */
 .form-floating > label {
     color: #6c757d;
+    transform-origin: 0 0;
+    transition: transform 0.2s var(--rd-ease, ease), color 0.2s ease, opacity 0.2s ease;
 }
 
 .form-floating > .form-control:focus,
 .form-floating > .form-control:not(:placeholder-shown),
 .form-floating > .form-select {
-    padding-top: 1.625rem;
-    padding-bottom: 0.625rem;
+    padding-top: 1.7rem;
+    padding-bottom: 0.55rem;
 }
 
 .form-floating > .form-control:focus ~ label,
 .form-floating > .form-control:not(:placeholder-shown) ~ label,
 .form-floating > .form-select ~ label {
+    color: #6c757d;
+    opacity: 1;
+    font-weight: 500;
+    transform: scale(0.78) translateY(-0.55rem) translateX(0.2rem);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-select:focus ~ label {
     color: var(--bs-primary);
-    opacity: 0.85;
-    transform: scale(0.82) translateY(0.1rem) translateX(0.15rem);
 }
 
 .input-group > .form-floating:not(:first-child):not(:last-child) > .form-control,

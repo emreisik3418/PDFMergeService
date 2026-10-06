@@ -203,6 +203,7 @@ mergeAllBtn.addEventListener('click', async () => {
         URL.revokeObjectURL(url);
 
         showToast(`${selected.length} klasör birleştirildi ve ZIP olarak indirildi!`, 'success');
+        window.ReportDeckFx?.celebrate();
 
     } catch {
         clearInterval(progInterval);
