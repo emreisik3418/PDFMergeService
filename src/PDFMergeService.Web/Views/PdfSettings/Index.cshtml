@@ -44,6 +44,7 @@
                         <span class="spinner-border spinner-border-sm me-2" role="status"></span>Kaydediliyor...
                     </span>
                 </button>
+                <div id="pdfSettingsResult" class="small mt-2" role="status" aria-live="polite"></div>
 
             </div>
         </div>
@@ -51,5 +52,70 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/pdf-settings.js" asp-append-version="true"></script>
+    @* Ayrı bir JS dosyasına bağlı kalmasın diye sayfa içinde; sonuç butonun altında da yazılır. *@
+    <script>
+        (() => {
+            const maxFileCount   = document.getElementById('maxFileCount');
+            const maxFileSizeMB  = document.getElementById('maxFileSizeMB');
+            const saveBtn        = document.getElementById('pdfSettingsSaveBtn');
+            const saveBtnNormal  = document.getElementById('pdfSettingsSaveBtnNormal');
+            const saveBtnLoading = document.getElementById('pdfSettingsSaveBtnLoading');
+            const result         = document.getElementById('pdfSettingsResult');
+
+            function showResult(message, ok) {
+                result.className = 'small mt-2 ' + (ok ? 'text-success' : 'text-danger');
+                result.textContent = message;
+                try {
+                    const container = document.getElementById('toastContainer');
+                    const el = document.createElement('div');
+                    el.className = 'toast align-items-center border-0 shadow text-bg-' + (ok ? 'success' : 'danger');
+                    el.setAttribute('role', 'alert');
+                    el.innerHTML = '<div class="d-flex"><div class="toast-body"></div>' +
+                        '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+                    el.querySelector('.toast-body').textContent = message;
+                    container.appendChild(el);
+                    new bootstrap.Toast(el, { delay: 5000 }).show();
+                    el.addEventListener('hidden.bs.toast', () => el.remove());
+                } catch (e) {
+                    console.warn('Bildirim gösterilemedi', e);
+                }
+            }
+
+            function setSaving(saving) {
+                saveBtn.disabled = saving;
+                saveBtnNormal.classList.toggle('d-none', saving);
+                saveBtnLoading.classList.toggle('d-none', !saving);
+            }
+
+            saveBtn.addEventListener('click', async () => {
+                const payload = {
+                    maxFileCount: parseInt(maxFileCount.value, 10),
+                    maxFileSizeMB: parseInt(maxFileSizeMB.value, 10)
+                };
+
+                if (Number.isNaN(payload.maxFileCount) || Number.isNaN(payload.maxFileSizeMB)) {
+                    showResult('Lütfen geçerli sayılar girin.', false);
+                    return;
+                }
+
+                setSaving(true);
+                try {
+                    const res = await fetch('@Url.Action("Save", "PdfSettings")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json().catch(() => ({}));
+
+                    if (res.ok) showResult(data.message || 'PDF ayarları kaydedildi.', true);
+                    else showResult(data.error || `Kaydetme başarısız (HTTP ${res.status}).`, false);
+                } catch (e) {
+                    console.error('PDF ayarları kaydedilemedi', e);
+                    showResult('Sunucuya ulaşılamadı: ' + (e && e.message ? e.message : e), false);
+                } finally {
+                    setSaving(false);
+                }
+            });
+        })();
+    </script>
 }
