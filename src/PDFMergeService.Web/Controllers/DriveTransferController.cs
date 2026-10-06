@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PDFMergeService.Core.Enums;
+using PDFMergeService.Core.Helpers;
 using PDFMergeService.Core.Interfaces;
 using PDFMergeService.Core.Models;
 using PDFMergeService.Web.ViewModels.DriveTransfer;
@@ -130,6 +131,7 @@ public class DriveTransferController : Controller
 
         var request = new DriveUploadRequest
         {
+            UserId = ResolveUploaderUserId(),
             WebPath = webPath,
             Path = path,
             FileName = fileName,
@@ -149,6 +151,18 @@ public class DriveTransferController : Controller
             _logger.LogError(ex, "Drive aktarım hatası: {FileName}", fileName);
             return (false, "Aktarım sırasında beklenmeyen bir hata oluştu.");
         }
+    }
+
+    // SharePoint'te dosyayı kimin yüklediği görünsün diye giriş yapan kullanıcının sicilinden türetilir.
+    // Sicil beklenen biçimde değilse null döner ve servis appsettings'teki sabit UserId'yi kullanır.
+    private int? ResolveUploaderUserId()
+    {
+        var username = User.Identity?.Name;
+        if (SicilUserIdConverter.TryConvert(username, out var userId))
+            return userId;
+
+        _logger.LogWarning("Sicil SharePoint kullanıcı id'sine çevrilemedi, varsayılan UserId kullanılacak: {Username}", username);
+        return null;
     }
 
     private static string[] BuildExtraParams(string? raw, string title, bool isMergedVersion)

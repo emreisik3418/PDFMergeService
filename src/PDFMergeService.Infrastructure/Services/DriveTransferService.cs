@@ -37,7 +37,7 @@ public class DriveTransferService : IDriveTransferService
         try
         {
             bool success = await client.UploadFileToPathAsync(
-                _settings.UserId,
+                request.UserId ?? _settings.UserId,
                 request.ExtraParams,
                 _settings.SiteUrl,
                 request.WebPath,
