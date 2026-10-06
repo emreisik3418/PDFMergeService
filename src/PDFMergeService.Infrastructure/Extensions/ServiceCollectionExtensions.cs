@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
         // (diğer servislerin Scoped olmasının aksine).
         services.AddSingleton<IActivityLogService, FileActivityLogService>();
         services.AddSingleton<IDrivePathConfigService, FileDrivePathConfigService>();
+        services.AddSingleton<IPdfMergeLimitsService, FilePdfMergeLimitsService>();
         return services;
     }
 

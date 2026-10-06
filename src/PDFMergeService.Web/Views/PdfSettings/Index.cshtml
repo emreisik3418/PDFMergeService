@@ -1,0 +1,55 @@
+@model PDFMergeService.Core.Models.PdfMergeLimits
+@using PDFMergeService.Core.Models
+@{
+    ViewData["Title"] = "PDF Ayarları";
+}
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
+                    <span class="card-header-icon"><i class="bi bi-sliders"></i></span>PDF Birleştirme Ayarları
+                </h5>
+            </div>
+            <div class="card-body p-4">
+
+                <div class="alert alert-info border-0 py-2 px-3 mb-4 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    PDF Birleştir sayfasındaki yükleme sınırlarıdır. Birleştirme kullanıcının tarayıcısında yapıldığı için
+                    çok yüksek değerler (ör. yüzlerce büyük dosya) tarayıcının belleğini zorlayabilir.
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-floating">
+                        <input type="number" id="maxFileCount" class="form-control" value="@Model.MaxFileCount"
+                               min="@PdfMergeLimits.MinFileCount" max="@PdfMergeLimits.MaxFileCountLimit" step="1" />
+                        <label for="maxFileCount">En Fazla Dosya Sayısı</label>
+                    </div>
+                    <div class="form-text">@PdfMergeLimits.MinFileCount – @PdfMergeLimits.MaxFileCountLimit arası.</div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-floating">
+                        <input type="number" id="maxFileSizeMB" class="form-control" value="@Model.MaxFileSizeMB"
+                               min="@PdfMergeLimits.MinFileSizeMB" max="@PdfMergeLimits.MaxFileSizeMBLimit" step="1" />
+                        <label for="maxFileSizeMB">Dosya Başına En Fazla Boyut (MB)</label>
+                    </div>
+                    <div class="form-text">@PdfMergeLimits.MinFileSizeMB – @PdfMergeLimits.MaxFileSizeMBLimit MB arası.</div>
+                </div>
+
+                <button type="button" id="pdfSettingsSaveBtn" class="btn btn-primary btn-lg w-100 shadow-sm">
+                    <span id="pdfSettingsSaveBtnNormal"><i class="bi bi-floppy me-2"></i>Kaydet</span>
+                    <span id="pdfSettingsSaveBtnLoading" class="d-none">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>Kaydediliyor...
+                    </span>
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pdf-settings.js" asp-append-version="true"></script>
+}

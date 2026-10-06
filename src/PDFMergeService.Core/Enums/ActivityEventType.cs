@@ -7,5 +7,6 @@ public enum ActivityEventType
     SingleMerge,
     FolderMerge,
     DriveTransfer,
-    DrivePathConfigUpdate
+    DrivePathConfigUpdate,
+    PdfSettingsUpdate
 }

@@ -2,9 +2,9 @@
 
 const { PDFDocument, StandardFonts, rgb } = PDFLib;
 
-// ─── Config (mirrors PdfSettings in appsettings.json) ─────────────────────────
-const MAX_FILE_SIZE_MB = 50;
-const MAX_FILE_COUNT = 20;
+// ─── Config (PDF Ayarları sayfasından, sayfa render edilirken gelir) ──────────
+const MAX_FILE_SIZE_MB = window.pdfMergeLimits?.maxFileSizeMB || 50;
+const MAX_FILE_COUNT = window.pdfMergeLimits?.maxFileCount || 20;
 
 // ─── State ───────────────────────────────────────────────────────────────────
 let uploadedFiles = [];   // { fileName, bytes: Uint8Array, pageCount, fileSize, fileSizeFormatted, order }
@@ -106,7 +106,8 @@ async function addFiles(files) {
     if (newFiles.length === 0) return;
 
     newFiles.forEach(f => uploadedFiles.push(f));
-    uploadedFiles.sort((a, b) => a.fileName.localeCompare(b.fileName, 'tr', { sensitivity: 'base' }));
+    // numeric: "2 - X" < "10 - X" < "100 - X" (düz metin sıralamasında "100" "11"den önce gelir).
+    uploadedFiles.sort((a, b) => a.fileName.localeCompare(b.fileName, 'tr', { sensitivity: 'base', numeric: true }));
     uploadedFiles.forEach((f, i) => f.order = i);
 
     renderFileList();

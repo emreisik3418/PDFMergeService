@@ -25,7 +25,13 @@
                         <i class="bi bi-folder2-open me-2"></i>Dosya Seç
                     </button>
                     <input type="file" id="fileInput" multiple accept=".pdf" class="d-none" />
-                    <p class="text-muted mt-3 mb-0 small">Maks. 50 MB/dosya &bull; En fazla 20 dosya &bull; Sadece PDF</p>
+                    <p class="text-muted mt-3 mb-0 small">
+                        Maks. @Model.MaxFileSizeMB MB/dosya &bull; En fazla @Model.MaxFileCount dosya &bull; Sadece PDF
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a href="/pdf-settings" class="ms-1" title="Sınırları düzenle" onclick="event.stopPropagation()"><i class="bi bi-gear"></i></a>
+                        }
+                    </p>
                 </div>
 
                 <!-- Dosya Listesi -->
@@ -250,6 +256,7 @@
 </div>
 
 @section Scripts {
+    <script>window.pdfMergeLimits = { maxFileCount: @Model.MaxFileCount, maxFileSizeMB: @Model.MaxFileSizeMB };</script>
     <script src="~/lib/pdf-lib/pdf-lib.min.js"></script>
     <script src="~/js/pdf-merge.js" asp-append-version="true"></script>
 }

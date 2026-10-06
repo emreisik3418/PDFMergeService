@@ -9,16 +9,23 @@ namespace PDFMergeService.Web.Controllers;
 public class PdfMergeController : Controller
 {
     private readonly IActivityLogService _activityLogService;
+    private readonly IPdfMergeLimitsService _pdfMergeLimitsService;
 
-    public PdfMergeController(IActivityLogService activityLogService)
+    public PdfMergeController(IActivityLogService activityLogService, IPdfMergeLimitsService pdfMergeLimitsService)
     {
         _activityLogService = activityLogService;
+        _pdfMergeLimitsService = pdfMergeLimitsService;
     }
 
     [HttpGet("/")]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View(new PdfMergeViewModel());
+        var limits = await _pdfMergeLimitsService.GetAsync();
+        return View(new PdfMergeViewModel
+        {
+            MaxFileCount = limits.MaxFileCount,
+            MaxFileSizeMB = limits.MaxFileSizeMB
+        });
     }
 
     [HttpPost("/pdf-merge/log")]

@@ -19,7 +19,7 @@ public class FolderScanService : IFolderScanService
             throw new DirectoryNotFoundException($"Klasör bulunamadı: {rootPath}");
 
         var subDirs = Directory.GetDirectories(rootPath)
-            .OrderBy(d => Path.GetFileName(d), StringComparer.OrdinalIgnoreCase)
+            .OrderBy(d => Path.GetFileName(d), NaturalStringComparer.Instance)
             .ToList();
 
         var result = new List<FolderInfo>();
@@ -27,7 +27,7 @@ public class FolderScanService : IFolderScanService
         foreach (var dir in subDirs)
         {
             var pdfs = Directory.GetFiles(dir, "*.pdf", SearchOption.TopDirectoryOnly)
-                .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+                .OrderBy(f => Path.GetFileName(f), NaturalStringComparer.Instance)
                 .ToList();
 
             if (pdfs.Count == 0)
