@@ -9,4 +9,7 @@ public class DrivePathConfig
 
     // Toplu yüklemede dosya adına göre hedef klasörü belirleyen kurallar.
     public List<BulkUploadRule> BulkUploadRules { get; set; } = new();
+
+    // Kurallardan önce denenen "dosya adı şunu içeriyorsa şu klasöre" eşleştirmeleri.
+    public List<BulkPathOverride> BulkPathOverrides { get; set; } = new();
 }

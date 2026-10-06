@@ -58,13 +58,26 @@
                     <div>
                         <div class="fw-medium">Toplu Yükleme Kuralları</div>
                         <div class="form-text mt-0">
-                            Dosya adında <strong>Dosya Adı Eki</strong> aranır; önündeki ad bölge/şube adıdır.
-                            Hedef: <code>Ana Klasör/&lt;Bölge&gt; &lt;Klasör Adı Eki&gt;/&lt;Dönem Klasörü&gt;</code>.
-                            Ana Klasör site alt yolunu içermemeli (webPath <code>performans</code> ise
-                            <code>/Kurumsal Şubeler</code> yazın, <code>/performans/Kurumsal Şubeler</code> değil).
-                            Klasör Adı Eki boşsa dosya adındaki ek aynen kullanılır. Dönem formatında
-                            <code>{YIL}</code> ve <code>{CEYREK}</code> yerine dosya adındaki yıl ve çeyrek yazılır.
-                            Büyük/küçük harf ve İ/ı farkı gözetilmez; birden fazla kural eşleşirse en uzun ek kazanır.
+                            Hedef: <code>Ana Klasör/&lt;Klasör Adı&gt;/&lt;Dönem Klasörü&gt;</code>.
+                            <ul class="mb-0 ps-3 mt-1">
+                                <li>
+                                    <strong>Dosya Adı Kalıbı</strong> dosya adında aranır; <code>{AD}</code> şube/bölge adını yakalar.
+                                    <code>{AD}</code> yazmazsanız ad ifadenin önündedir: <code>KURUMSAL ŞUBESİ</code>
+                                    → "BAŞKENT KURUMSAL ŞUBESİ". Ad ortadaysa: <code>ÖZEL {AD} ŞUBESİ</code> → "ÖZEL BAŞKENT ŞUBESİ".
+                                </li>
+                                <li>
+                                    <strong>Klasör Adı</strong> boşsa dosya adındaki ifade aynen kullanılır.
+                                    <code>{AD}</code> içeriyorsa şablondur (<code>{AD} KURUMSAL ŞUBELER</code>); içermiyorsa adın arkasına eklenir.
+                                </li>
+                                <li>
+                                    <strong>Dönem Klasörü</strong>nde <code>{YIL}</code> ve <code>{CEYREK}</code> dosya adındaki yıl/çeyrekle
+                                    doldurulur; boş bırakılırsa dönem klasörü açılmaz.
+                                </li>
+                                <li>
+                                    Ana Klasör site alt yolunu içermemeli (webPath <code>performans</code> ise <code>/Kurumsal Şubeler</code> yazın).
+                                    Büyük/küçük harf ve İ/ı farkı gözetilmez; birden fazla kural eşleşirse en uzun kalıp kazanır.
+                                </li>
+                            </ul>
                         </div>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-primary text-nowrap ms-3" data-add-row="bulkUploadRules">
@@ -75,10 +88,10 @@
                     <table class="table table-sm align-middle" style="min-width: 760px;">
                         <thead>
                             <tr class="text-muted small">
-                                <th>Dosya Adı Eki</th>
-                                <th>Klasör Adı Eki</th>
+                                <th>Dosya Adı Kalıbı</th>
+                                <th>Klasör Adı</th>
                                 <th>Ana Klasör</th>
-                                <th>Dönem Klasörü Formatı</th>
+                                <th>Dönem Klasörü</th>
                                 <th style="width: 1%;"></th>
                             </tr>
                         </thead>
@@ -86,12 +99,38 @@
                     </table>
                 </div>
 
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div>
+                        <div class="fw-medium">Özel Eşleştirmeler</div>
+                        <div class="form-text mt-0">
+                            Kurallara uymayan özel durumlar için: dosya adı <strong>Aranacak Metin</strong>'i içeriyorsa dosya
+                            doğrudan <strong>Hedef Klasör</strong>'e yüklenir. Kurallardan önce denenir. Hedef klasörde
+                            <code>{YIL}</code> ve <code>{CEYREK}</code> kullanılabilir; ör. <code>/Genel Müdürlük/Yönetim Kurulu/{YIL}</code>.
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary text-nowrap ms-3" data-add-row="bulkPathOverrides">
+                        <i class="bi bi-plus-lg me-1"></i>Ekle
+                    </button>
+                </div>
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th style="width: 40%;">Aranacak Metin</th>
+                                <th>Hedef Klasör</th>
+                                <th style="width: 1%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkPathOverridesBody"></tbody>
+                    </table>
+                </div>
+
                 <div class="border rounded-3 p-3 mb-4 bg-body-tertiary">
                     <label for="rulePreviewInput" class="form-label fw-medium small mb-1">
-                        <i class="bi bi-eye me-1"></i>Kuralları dene
+                        <i class="bi bi-eye me-1"></i>Kuralları ve eşleştirmeleri dene
                     </label>
                     <input type="text" id="rulePreviewInput" class="form-control form-control-sm"
-                           value="BAŞKENT KURUMSAL ŞUBESİ 2026 - 3.Çeyrek.pdf" />
+                           value="ÖZEL BAŞKENT ŞUBESİ 2026 - 3. Çeyrek.pdf" />
                     <div class="small mt-2" id="rulePreviewResult"></div>
                     <div class="form-text">Henüz kaydedilmemiş değişiklikler de önizlemeye yansır.</div>
                 </div>

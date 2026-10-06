@@ -10,6 +10,7 @@ public class SharePointSettings
     public List<WebPathOption> WebPathOptions { get; set; } = new();
     public string BulkWebPath { get; set; } = string.Empty;
     public List<BulkUploadRule> BulkUploadRules { get; set; } = new();
+    public List<BulkPathOverride> BulkPathOverrides { get; set; } = new();
 }
 
 public class WebPathOption

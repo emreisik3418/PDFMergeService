@@ -19,12 +19,20 @@ const lists = {
         })),
         body: document.getElementById('bulkUploadRulesBody'),
         fields: {
-            fileSuffix: 'KURUMSAL ŞUBESİ',
-            folderSuffix: 'KURUMSAL ŞUBELER',
-            rootPath: '/Kurumsal Şubeler',
+            fileSuffix: 'ÖZEL {AD} ŞUBESİ',
+            folderSuffix: '(boş: dosyadaki ifade)',
+            rootPath: '/Özel Şubeler',
             periodFolderFormat: '{YIL} - {CEYREK}. Çeyrek'
         },
         defaults: { periodFolderFormat: '{YIL} - {CEYREK}. Çeyrek' }
+    },
+    bulkPathOverrides: {
+        items: (config.bulkPathOverrides || []).map(o => ({ contains: o.contains, targetPath: o.targetPath })),
+        body: document.getElementById('bulkPathOverridesBody'),
+        fields: {
+            contains: 'YÖNETİM KURULU',
+            targetPath: '/Genel Müdürlük/Yönetim Kurulu/{YIL}'
+        }
     }
 };
 
@@ -93,7 +101,8 @@ saveBtn.addEventListener('click', async () => {
     const payload = {
         webPathOptions: lists.webPathOptions.items,
         bulkWebPath: bulkWebPath.value.trim(),
-        bulkUploadRules: lists.bulkUploadRules.items
+        bulkUploadRules: lists.bulkUploadRules.items,
+        bulkPathOverrides: lists.bulkPathOverrides.items
     };
 
     setSaving(true);
@@ -165,11 +174,12 @@ function updatePreview() {
     const fileName = rulePreviewInput.value.trim();
     if (!fileName) { rulePreviewResult.innerHTML = ''; return; }
 
-    const result = DrivePathResolver.resolve(fileName, DrivePathResolver.compile(lists.bulkUploadRules.items));
+    const compiled = DrivePathResolver.compile(lists.bulkUploadRules.items, lists.bulkPathOverrides.items);
+    const result = DrivePathResolver.resolve(fileName, compiled);
     rulePreviewResult.innerHTML = result
         ? `<i class="bi bi-arrow-return-right me-1 text-success"></i><code>${escHtml(result.path)}</code>
-           <span class="text-muted">(kural: ${escHtml(result.rule.fileSuffix)})</span>`
-        : '<i class="bi bi-x-circle me-1 text-danger"></i><span class="text-danger">Eşleşen kural yok veya dosya adında yıl/çeyrek bulunamadı.</span>';
+           <span class="text-muted">(${escHtml(result.label)})</span>`
+        : '<i class="bi bi-x-circle me-1 text-danger"></i><span class="text-danger">Eşleşen kural/eşleştirme yok veya dosya adında yıl/çeyrek bulunamadı.</span>';
 }
 
 rulePreviewInput.addEventListener('input', updatePreview);

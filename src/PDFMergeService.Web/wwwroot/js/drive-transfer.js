@@ -80,7 +80,7 @@ const driveBulkUploadBtnLoading = document.getElementById('driveBulkUploadBtnLoa
 let bulkItems = [];
 
 // Drive Yolları sayfasında tanımlanan kurallar (bkz. drive-path-resolver.js).
-const bulkRules = DrivePathResolver.compile(window.driveBulkUploadRules || []);
+const bulkRules = DrivePathResolver.compile(window.driveBulkUploadRules || [], window.driveBulkPathOverrides || []);
 
 function resolveDrivePath(fileName) {
     return DrivePathResolver.resolve(fileName, bulkRules)?.path || '';

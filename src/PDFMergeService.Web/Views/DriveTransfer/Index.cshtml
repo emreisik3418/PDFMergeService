@@ -123,11 +123,15 @@
                     <div class="alert alert-info border-0 py-2 px-3 mb-4 small">
                         <i class="bi bi-info-circle me-1"></i>
                         Dosya adındaki ifadeye göre ana klasör, bölge/şube klasörü ve dönem (yıl - çeyrek) klasörü
-                        otomatik belirlenir; ör. <code>BAŞKENT KURUMSAL ŞUBESİ 2026 - 3.Çeyrek.pdf</code> →
+                        otomatik belirlenir; ör. <code>BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek.pdf</code> →
                         <code>Kurumsal Şubeler/BAŞKENT KURUMSAL ŞUBELER/2026 - 3. Çeyrek</code>.
-                        @if (Model.BulkUploadRules.Any())
+                        @if (Model.BulkUploadRules.Any() || Model.BulkPathOverrides.Any())
                         {
-                            @Html.Raw("Tanınan ifadeler: " + string.Join(", ", Model.BulkUploadRules.Select(r => $"<strong>{System.Net.WebUtility.HtmlEncode(r.FileSuffix)}</strong>")) + ".")
+                            @* {AD} kullanıcıya "…" olarak gösterilir: "ÖZEL {AD} ŞUBESİ" → "ÖZEL … ŞUBESİ" *@
+                            @Html.Raw("Tanınan ifadeler: " + string.Join(", ",
+                                Model.BulkPathOverrides.Select(o => o.Contains)
+                                    .Concat(Model.BulkUploadRules.Select(r => r.FileSuffix.Replace("{AD}", "…")))
+                                    .Select(s => $"<strong>{System.Net.WebUtility.HtmlEncode(s)}</strong>")) + ".")
                         }
                         else
                         {
@@ -190,8 +194,13 @@
 </div>
 
 @section Scripts {
-    <script>window.driveBulkUploadRules = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BulkUploadRules,
-        new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));</script>
+    @{
+        var camelCase = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+    }
+    <script>
+        window.driveBulkUploadRules = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BulkUploadRules, camelCase));
+        window.driveBulkPathOverrides = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BulkPathOverrides, camelCase));
+    </script>
     <script src="~/js/drive-path-resolver.js" asp-append-version="true"></script>
     <script src="~/js/drive-transfer.js" asp-append-version="true"></script>
 }

@@ -6,6 +6,17 @@
     "Items": [
       {
         "Type": "improvement",
+        "Title": "Özel şube dosyaları da otomatik tanınıyor",
+        "Description": "Toplu Yükleme'de şube adının ortada olduğu dosyalar da (ör. \"ÖZEL BAŞKENT ŞUBESİ 2026 - 3. Çeyrek.pdf\") doğru klasöre yönlendirilir. Kurallara uymayan özel dosyalar için yöneticiniz doğrudan bir hedef klasör tanımlayabilir."
+      },
+      {
+        "Type": "new",
+        "Title": "Toplu yükleme kurallarında {AD} kalıbı ve özel eşleştirmeler",
+        "Description": "Drive Yolları › Toplu Yükleme Kuralları'nda Dosya Adı Kalıbı'na {AD} yazarak şube adının yerini belirtebilirsiniz: \"ÖZEL {AD} ŞUBESİ\". Klasör Adı'nda da {AD} kullanılabilir (\"{AD} KURUMSAL ŞUBELER\"); Dönem Klasörü boş bırakılırsa dönem klasörü açılmaz. Yeni Özel Eşleştirmeler bölümünde \"dosya adı şunu içeriyorsa şu klasöre yükle\" tanımları yapabilirsiniz; bunlar kurallardan önce denenir ve hedef klasörde {YIL}/{CEYREK} kullanılabilir. Kalıpları kaydetmeden önce \"Kuralları ve eşleştirmeleri dene\" kutusunda deneyin.",
+        "AdminOnly": true
+      },
+      {
+        "Type": "improvement",
         "Title": "Yenilenen görünüm",
         "Description": "Uygulama daha modern bir görünüme kavuştu: yeni yazı tipi, yumuşak geçişler ve animasyonlar. Form alanlarındaki etiketler artık girdiğiniz değerle çakışmıyor; alan seçildiğinde küçülüp üst kenara çıkıyor. PDF birleştirme ve Drive aktarımı başarıyla tamamlandığında küçük bir kutlama sizi bekliyor."
       },

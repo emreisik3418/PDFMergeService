@@ -26,7 +26,8 @@ public class FileDrivePathConfigService : JsonFileConfigStore<DrivePathConfig>, 
     {
         WebPathOptions = _sharePointSettings.WebPathOptions,
         BulkWebPath = _sharePointSettings.BulkWebPath,
-        BulkUploadRules = _sharePointSettings.BulkUploadRules
+        BulkUploadRules = _sharePointSettings.BulkUploadRules,
+        BulkPathOverrides = _sharePointSettings.BulkPathOverrides
     };
 
     // Kurallardan önceki sürümde oluşturulmuş dosya: kuralları appsettings'ten tamamla.

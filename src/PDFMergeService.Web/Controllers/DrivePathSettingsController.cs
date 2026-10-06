@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PDFMergeService.Core.Enums;
@@ -37,10 +38,13 @@ public class DrivePathSettingsController : Controller
         {
             WebPathOptions = Normalize(model.WebPathOptions),
             BulkWebPath = model.BulkWebPath?.Trim() ?? string.Empty,
-            BulkUploadRules = NormalizeRules(model.BulkUploadRules)
+            BulkUploadRules = NormalizeRules(model.BulkUploadRules),
+            BulkPathOverrides = NormalizeOverrides(model.BulkPathOverrides)
         };
 
-        var error = Validate(config.WebPathOptions, "Site alt yolu") ?? ValidateRules(config.BulkUploadRules);
+        var error = Validate(config.WebPathOptions, "Site alt yolu")
+                 ?? ValidateRules(config.BulkUploadRules)
+                 ?? ValidateOverrides(config.BulkPathOverrides);
         if (error != null)
             return BadRequest(new { error });
 
@@ -51,7 +55,7 @@ public class DrivePathSettingsController : Controller
             Username = User.Identity?.Name ?? "unknown",
             EventType = ActivityEventType.DrivePathConfigUpdate,
             Detail = $"{config.WebPathOptions.Count} site alt yolu, {config.BulkUploadRules.Count} toplu yükleme kuralı, " +
-                     $"toplu webPath: {config.BulkWebPath}",
+                     $"{config.BulkPathOverrides.Count} özel eşleştirme, toplu webPath: {config.BulkWebPath}",
             Success = true
         });
 
@@ -77,6 +81,16 @@ public class DrivePathSettingsController : Controller
             .Where(r => r.FileSuffix.Length > 0 || r.FolderSuffix.Length > 0 || r.RootPath.Length > 0 || r.PeriodFolderFormat.Length > 0)
             .ToList();
 
+    private static List<BulkPathOverride> NormalizeOverrides(List<BulkPathOverride>? overrides) =>
+        (overrides ?? new())
+            .Select(o => new BulkPathOverride
+            {
+                Contains = o.Contains?.Trim() ?? string.Empty,
+                TargetPath = o.TargetPath?.Trim().TrimEnd('/') ?? string.Empty
+            })
+            .Where(o => o.Contains.Length > 0 || o.TargetPath.Length > 0)
+            .ToList();
+
     private static string? ValidateRules(List<BulkUploadRule> rules)
     {
         foreach (var rule in rules)
@@ -84,21 +98,62 @@ public class DrivePathSettingsController : Controller
             var name = rule.FileSuffix.Length > 0 ? $"\"{rule.FileSuffix}\" kuralında" : "Toplu yükleme kurallarında";
 
             if (rule.FileSuffix.Length == 0)
-                return "Toplu yükleme kurallarında dosya adı eki boş bir satır var.";
+                return "Toplu yükleme kurallarında dosya adı kalıbı boş bir satır var.";
+            if (CountToken(rule.FileSuffix, "{AD}") > 1)
+                return $"{name} {{AD}} en fazla bir kez kullanılabilir.";
+            if (rule.FileSuffix.Replace("{AD}", string.Empty).Trim().Length == 0)
+                return $"{name} dosya adı kalıbı {{AD}} dışında bir metin içermeli.";
             if (rule.RootPath.Length == 0)
                 return $"{name} ana klasör boş.";
-            if (!rule.PeriodFolderFormat.Contains("{YIL}") || !rule.PeriodFolderFormat.Contains("{CEYREK}"))
-                return $"{name} dönem klasörü formatı {{YIL}} ve {{CEYREK}} ifadelerini içermeli.";
+
+            var unknown = UnknownToken(rule.FileSuffix, "{AD}")
+                       ?? UnknownToken(rule.FolderSuffix, "{AD}")
+                       ?? UnknownToken(rule.RootPath)
+                       ?? UnknownToken(rule.PeriodFolderFormat, "{YIL}", "{CEYREK}");
+            if (unknown != null)
+                return $"{name} tanınmayan ifade: {unknown}. Kalıpta {{AD}}, dönem formatında {{YIL}} ve {{CEYREK}} kullanılabilir.";
         }
 
         var duplicate = rules
             .GroupBy(r => r.FileSuffix, StringComparer.Create(TurkishCulture, ignoreCase: true))
             .FirstOrDefault(g => g.Count() > 1);
         if (duplicate != null)
-            return $"Toplu yükleme kurallarında \"{duplicate.Key}\" eki birden fazla kez girilmiş.";
+            return $"Toplu yükleme kurallarında \"{duplicate.Key}\" kalıbı birden fazla kez girilmiş.";
 
         return null;
     }
+
+    private static string? ValidateOverrides(List<BulkPathOverride> overrides)
+    {
+        foreach (var o in overrides)
+        {
+            if (o.Contains.Length == 0)
+                return "Özel eşleştirmelerde aranacak metni boş bir satır var.";
+            if (o.TargetPath.Length == 0)
+                return $"\"{o.Contains}\" eşleştirmesinde hedef klasör boş.";
+
+            var unknown = UnknownToken(o.Contains) ?? UnknownToken(o.TargetPath, "{YIL}", "{CEYREK}");
+            if (unknown != null)
+                return $"\"{o.Contains}\" eşleştirmesinde tanınmayan ifade: {unknown}. Hedef klasörde {{YIL}} ve {{CEYREK}} kullanılabilir.";
+        }
+
+        var duplicate = overrides
+            .GroupBy(o => o.Contains, StringComparer.Create(TurkishCulture, ignoreCase: true))
+            .FirstOrDefault(g => g.Count() > 1);
+        if (duplicate != null)
+            return $"Özel eşleştirmelerde \"{duplicate.Key}\" metni birden fazla kez girilmiş.";
+
+        return null;
+    }
+
+    private static int CountToken(string text, string token) =>
+        (text.Length - text.Replace(token, string.Empty).Length) / token.Length;
+
+    // Metindeki {…} ifadelerinden izin verilmeyen ilkini döner (ör. yazım hatası "{YİL}").
+    private static string? UnknownToken(string text, params string[] allowed) =>
+        Regex.Matches(text, @"\{[^{}]*\}")
+            .Select(m => m.Value)
+            .FirstOrDefault(token => !allowed.Contains(token));
 
     private static string? Validate(List<WebPathOption> options, string groupName)
     {
