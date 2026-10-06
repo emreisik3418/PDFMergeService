@@ -122,43 +122,19 @@
 
                     <div class="alert alert-info border-0 py-2 px-3 mb-4 small">
                         <i class="bi bi-info-circle me-1"></i>
-                        Dosya adından bölge/şube ve dönem (yıl - çeyrek) otomatik olarak ayıklanır ve seçtiğiniz
-                        klasör kökü altında (<code>Kök/Bölge/Yıl - Çeyrek. Çeyrek</code>) hedef klasör önerilir.
-                        @if (Model.RegionSuffixes.Any())
+                        Dosya adındaki ifadeye göre ana klasör, bölge/şube klasörü ve dönem (yıl - çeyrek) klasörü
+                        otomatik belirlenir; ör. <code>BAŞKENT KURUMSAL ŞUBESİ 2026 - 3.Çeyrek.pdf</code> →
+                        <code>Kurumsal Şubeler/BAŞKENT KURUMSAL ŞUBELER/2026 - 3.Çeyrek</code>.
+                        @if (Model.BulkUploadRules.Any())
                         {
-                            @Html.Raw("Tanınan ifadeler: " + string.Join(", ", Model.RegionSuffixes.Select(s => $"<strong>{System.Net.WebUtility.HtmlEncode(s)}</strong>")) + ".")
+                            @Html.Raw("Tanınan ifadeler: " + string.Join(", ", Model.BulkUploadRules.Select(r => $"<strong>{System.Net.WebUtility.HtmlEncode(r.FileSuffix)}</strong>")) + ".")
                         }
                         else
                         {
-                            <strong class="text-warning">Tanımlı bölge/şube eki yok, hedef klasörler elle girilmelidir.</strong>
+                            <strong class="text-warning">Tanımlı toplu yükleme kuralı yok, hedef klasörler elle girilmelidir.</strong>
+                            @if (User.IsInRole("Admin")) { <a href="/drive-paths">Drive Yolları</a> }
                         }
                         Yüklemeden önce aşağıdaki tablodan her dosyanın hedef klasörünü kontrol edip gerekirse düzeltebilirsiniz.
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-floating">
-                            <select id="driveBulkRootPath" class="form-select">
-                                <option value="">Seçiniz...</option>
-                                @foreach (var opt in Model.BulkRootPathOptions)
-                                {
-                                    <option value="@opt.Value">@opt.Label</option>
-                                }
-                            </select>
-                            <label for="driveBulkRootPath">Klasör Kökü (rapor tipi)</label>
-                        </div>
-                        @if (!Model.BulkRootPathOptions.Any())
-                        {
-                            <div class="form-text text-warning">
-                                Tanımlı klasör kökü yok.
-                                @if (User.IsInRole("Admin")) { <a href="/drive-paths">Drive Yolları</a> } else { <text>Yöneticinize başvurun.</text> }
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="form-text">
-                                Kökü değiştirmek, tablodaki türetilmiş tüm yolları yeniden hesaplar.
-                            </div>
-                        }
                     </div>
 
                     <div class="mb-4">
@@ -214,6 +190,8 @@
 </div>
 
 @section Scripts {
-    <script>window.driveRegionSuffixes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RegionSuffixes));</script>
+    <script>window.driveBulkUploadRules = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BulkUploadRules,
+        new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));</script>
+    <script src="~/js/drive-path-resolver.js" asp-append-version="true"></script>
     <script src="~/js/drive-transfer.js" asp-append-version="true"></script>
 }

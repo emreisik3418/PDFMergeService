@@ -2,22 +2,29 @@
 
 const config = window.drivePathConfig || {};
 
-// Her liste satırı { alan: değer } nesnesi; fields, satırda hangi input'ların hangi sırayla çizileceğini belirler.
+// Her liste satırı { alan: değer } nesnesi; fields, satırda hangi input'ların hangi sırayla
+// çizileceğini (değer: placeholder), defaults yeni satırın ön değerlerini belirler.
 const lists = {
     webPathOptions: {
         items: (config.webPathOptions || []).map(o => ({ label: o.label, value: o.value })),
         body: document.getElementById('webPathOptionsBody'),
         fields: { label: 'Performans', value: 'performans' }
     },
-    bulkRootPathOptions: {
-        items: (config.bulkRootPathOptions || []).map(o => ({ label: o.label, value: o.value })),
-        body: document.getElementById('bulkRootPathOptionsBody'),
-        fields: { label: 'Bölge Raporları', value: '/performans/BolgeRaporlari' }
-    },
-    regionSuffixes: {
-        items: (config.regionSuffixes || []).map(s => ({ value: s })),
-        body: document.getElementById('regionSuffixesBody'),
-        fields: { value: 'BÖLGE MÜDÜRLÜĞÜ' }
+    bulkUploadRules: {
+        items: (config.bulkUploadRules || []).map(r => ({
+            fileSuffix: r.fileSuffix,
+            folderSuffix: r.folderSuffix,
+            rootPath: r.rootPath,
+            periodFolderFormat: r.periodFolderFormat
+        })),
+        body: document.getElementById('bulkUploadRulesBody'),
+        fields: {
+            fileSuffix: 'KURUMSAL ŞUBESİ',
+            folderSuffix: 'KURUMSAL ŞUBELER',
+            rootPath: '/performans/Kurumsal Şubeler',
+            periodFolderFormat: '{YIL} - {CEYREK}.Çeyrek'
+        },
+        defaults: { periodFolderFormat: '{YIL} - {CEYREK}.Çeyrek' }
     }
 };
 
@@ -31,8 +38,9 @@ bulkWebPath.value = config.bulkWebPath || '';
 document.querySelectorAll('[data-add-row]').forEach(btn => {
     btn.addEventListener('click', () => {
         const list = lists[btn.dataset.addRow];
-        list.items.push(Object.fromEntries(Object.keys(list.fields).map(key => [key, ''])));
+        list.items.push(Object.fromEntries(Object.keys(list.fields).map(key => [key, list.defaults?.[key] || ''])));
         renderList(list);
+        updatePreview();
         list.body.querySelector('tr:last-child input')?.focus();
     });
 });
@@ -60,6 +68,7 @@ function renderList(list) {
         removeBtn.addEventListener('click', () => {
             list.items.splice(idx, 1);
             renderList(list);
+            updatePreview();
         });
         removeTd.appendChild(removeBtn);
         tr.appendChild(removeTd);
@@ -74,8 +83,8 @@ function inputCell(item, key, placeholder) {
     input.type = 'text';
     input.className = 'form-control form-control-sm';
     input.placeholder = placeholder;
-    input.value = item[key];
-    input.addEventListener('input', () => { item[key] = input.value; });
+    input.value = item[key] || '';
+    input.addEventListener('input', () => { item[key] = input.value; updatePreview(); });
     td.appendChild(input);
     return td;
 }
@@ -83,9 +92,8 @@ function inputCell(item, key, placeholder) {
 saveBtn.addEventListener('click', async () => {
     const payload = {
         webPathOptions: lists.webPathOptions.items,
-        bulkRootPathOptions: lists.bulkRootPathOptions.items,
         bulkWebPath: bulkWebPath.value.trim(),
-        regionSuffixes: lists.regionSuffixes.items.map(o => o.value)
+        bulkUploadRules: lists.bulkUploadRules.items
     };
 
     setSaving(true);
@@ -106,7 +114,7 @@ saveBtn.addEventListener('click', async () => {
         // Sunucu boş satırları atladığı için listeleri temizlenmiş haliyle yeniden çiz.
         Object.values(lists).forEach(list => {
             list.items = list.items
-                .map(o => Object.fromEntries(Object.entries(o).map(([key, val]) => [key, val.trim()])))
+                .map(o => Object.fromEntries(Object.entries(o).map(([key, val]) => [key, (val || '').trim()])))
                 .filter(o => Object.values(o).some(Boolean));
             renderList(list);
         });
@@ -148,4 +156,23 @@ function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ---- Kural önizleme ----
+
+const rulePreviewInput  = document.getElementById('rulePreviewInput');
+const rulePreviewResult = document.getElementById('rulePreviewResult');
+
+function updatePreview() {
+    const fileName = rulePreviewInput.value.trim();
+    if (!fileName) { rulePreviewResult.innerHTML = ''; return; }
+
+    const result = DrivePathResolver.resolve(fileName, DrivePathResolver.compile(lists.bulkUploadRules.items));
+    rulePreviewResult.innerHTML = result
+        ? `<i class="bi bi-arrow-return-right me-1 text-success"></i><code>${escHtml(result.path)}</code>
+           <span class="text-muted">(kural: ${escHtml(result.rule.fileSuffix)})</span>`
+        : '<i class="bi bi-x-circle me-1 text-danger"></i><span class="text-danger">Eşleşen kural yok veya dosya adında yıl/çeyrek bulunamadı.</span>';
+}
+
+rulePreviewInput.addEventListener('input', updatePreview);
+
 Object.values(lists).forEach(renderList);
+updatePreview();

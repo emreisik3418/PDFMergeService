@@ -69,7 +69,6 @@ document.querySelectorAll('#driveModeTabs [data-drive-tab]').forEach(btn => {
 // ---- Toplu Yükleme ----
 
 const driveBulkFiles          = document.getElementById('driveBulkFiles');
-const driveBulkRootPath       = document.getElementById('driveBulkRootPath');
 const driveBulkSelectAllMerged = document.getElementById('driveBulkSelectAllMerged');
 const driveBulkTableBody      = document.getElementById('driveBulkTableBody');
 const driveBulkEmptyRow       = document.getElementById('driveBulkEmptyRow');
@@ -79,55 +78,21 @@ const driveBulkUploadBtnLoading = document.getElementById('driveBulkUploadBtnLoa
 
 let bulkItems = [];
 
-driveBulkRootPath.addEventListener('change', () => {
-    const rootPath = driveBulkRootPath.value;
-    bulkItems.forEach(item => { item.path = resolveDrivePath(item.fileName, rootPath); });
-    renderBulkTable();
-});
+// Drive Yolları sayfasında tanımlanan kurallar (bkz. drive-path-resolver.js).
+const bulkRules = DrivePathResolver.compile(window.driveBulkUploadRules || []);
 
-// Drive Yolları sayfasında tanımlanan eklerden (ör. "BÖLGE MÜDÜRLÜĞÜ") bölge desenini kurar.
-// Türkçe harfler (İ/i, I/ı, Ö/ö...) düz /i bayrağıyla katlanmadığı için her harf
-// tr-TR büyük/küçük haliyle karakter sınıfına açılır; boşluklar herhangi bir boşluk dizisine uyar.
-const regionPattern = buildRegionPattern(window.driveRegionSuffixes || []);
-
-function buildRegionPattern(suffixes) {
-    const alternatives = suffixes
-        .map(s => s.trim())
-        .filter(Boolean)
-        .map(s => Array.from(s).map(ch => {
-            if (/\s/.test(ch)) return '\\s+';
-            const upper = ch.toLocaleUpperCase('tr-TR');
-            const lower = ch.toLocaleLowerCase('tr-TR');
-            if (upper === lower) return ch.replace(/[.*+?^${}()|[\]\\\/-]/g, '\\$&');
-            return `[${upper}${lower}]`;
-        }).join('').replace(/(\\s\+)+/g, '\\s+'));
-
-    if (alternatives.length === 0) return null;
-    return new RegExp(`([^\\-–—]+?)\\s*(?:${alternatives.join('|')})`, 'i');
-}
-
-function resolveDrivePath(fileName, rootPath) {
-    if (!regionPattern) return '';
-    const base = fileName.replace(/\.pdf$/i, '');
-    const regionMatch = base.match(regionPattern);
-    const yearMatch = base.match(/\b(20\d{2})\b/);
-    const quarterMatch = base.match(/(\d)\s*\.?\s*[Çç]eyrek/);
-
-    if (!regionMatch || !yearMatch || !quarterMatch) return '';
-
-    const region = regionMatch[0].replace(/^[\d\s\-–—.]+/, '').trim();
-    return `${rootPath}/${region}/${yearMatch[1]} - ${quarterMatch[1]}. Çeyrek`;
+function resolveDrivePath(fileName) {
+    return DrivePathResolver.resolve(fileName, bulkRules)?.path || '';
 }
 
 driveBulkFiles.addEventListener('change', () => {
     const files = Array.from(driveBulkFiles.files || []);
-    const rootPath = driveBulkRootPath.value;
     files.forEach(file => {
         if (!/\.pdf$/i.test(file.name)) {
             showToast(`"${file.name}" bir PDF dosyası değil, atlandı.`, 'warning');
             return;
         }
-        const path = resolveDrivePath(file.name, rootPath);
+        const path = resolveDrivePath(file.name);
         bulkItems.push({
             file,
             fileName: file.name,

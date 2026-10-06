@@ -32,8 +32,7 @@ public class DriveTransferController : Controller
         return View(new DriveTransferIndexViewModel
         {
             WebPathOptions = config.WebPathOptions,
-            BulkRootPathOptions = config.BulkRootPathOptions,
-            RegionSuffixes = config.RegionSuffixes
+            BulkUploadRules = config.BulkUploadRules
         });
     }
 

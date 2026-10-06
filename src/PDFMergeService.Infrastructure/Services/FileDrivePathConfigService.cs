@@ -63,15 +63,24 @@ public class FileDrivePathConfigService : IDrivePathConfigService
         if (File.Exists(_settings.FilePath))
         {
             var json = await File.ReadAllTextAsync(_settings.FilePath);
-            return JsonSerializer.Deserialize<DrivePathConfig>(json, JsonOptions) ?? new DrivePathConfig();
+            var config = JsonSerializer.Deserialize<DrivePathConfig>(json, JsonOptions) ?? new DrivePathConfig();
+
+            // Kurallardan önceki sürümde oluşturulmuş dosya: kuralları appsettings'ten tamamla.
+            using var document = JsonDocument.Parse(json);
+            if (!document.RootElement.TryGetProperty(nameof(DrivePathConfig.BulkUploadRules), out _))
+            {
+                config.BulkUploadRules = CloneRules(_sharePointSettings.BulkUploadRules);
+                await WriteAsync(config);
+            }
+
+            return config;
         }
 
         var seed = new DrivePathConfig
         {
             WebPathOptions = _sharePointSettings.WebPathOptions,
-            BulkRootPathOptions = _sharePointSettings.BulkRootPathOptions,
             BulkWebPath = _sharePointSettings.BulkWebPath,
-            RegionSuffixes = _sharePointSettings.RegionSuffixes
+            BulkUploadRules = CloneRules(_sharePointSettings.BulkUploadRules)
         };
         await WriteAsync(seed);
         return seed;
@@ -92,8 +101,16 @@ public class FileDrivePathConfigService : IDrivePathConfigService
     private static DrivePathConfig Clone(DrivePathConfig config) => new()
     {
         WebPathOptions = config.WebPathOptions.Select(o => new WebPathOption { Label = o.Label, Value = o.Value }).ToList(),
-        BulkRootPathOptions = config.BulkRootPathOptions.Select(o => new WebPathOption { Label = o.Label, Value = o.Value }).ToList(),
         BulkWebPath = config.BulkWebPath,
-        RegionSuffixes = config.RegionSuffixes.ToList()
+        BulkUploadRules = CloneRules(config.BulkUploadRules)
     };
+
+    private static List<BulkUploadRule> CloneRules(List<BulkUploadRule> rules) =>
+        rules.Select(r => new BulkUploadRule
+        {
+            FileSuffix = r.FileSuffix,
+            FolderSuffix = r.FolderSuffix,
+            RootPath = r.RootPath,
+            PeriodFolderFormat = r.PeriodFolderFormat
+        }).ToList();
 }

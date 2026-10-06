@@ -8,9 +8,8 @@ public class SharePointSettings
     public string? Username { get; set; }
     public string? Password { get; set; }
     public List<WebPathOption> WebPathOptions { get; set; } = new();
-    public List<WebPathOption> BulkRootPathOptions { get; set; } = new();
     public string BulkWebPath { get; set; } = string.Empty;
-    public List<string> RegionSuffixes { get; set; } = new();
+    public List<BulkUploadRule> BulkUploadRules { get; set; } = new();
 }
 
 public class WebPathOption

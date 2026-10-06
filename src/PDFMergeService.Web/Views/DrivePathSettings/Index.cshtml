@@ -56,51 +56,42 @@
 
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <div>
-                        <div class="fw-medium">Klasör Kökleri (rapor tipi)</div>
+                        <div class="fw-medium">Toplu Yükleme Kuralları</div>
                         <div class="form-text mt-0">
-                            Hedef klasör <code>Kök/Bölge/Yıl - Çeyrek. Çeyrek</code> olarak türetilir.
+                            Dosya adında <strong>Dosya Adı Eki</strong> aranır; önündeki ad bölge/şube adıdır.
+                            Hedef: <code>Ana Klasör/&lt;Bölge&gt; &lt;Klasör Adı Eki&gt;/&lt;Dönem Klasörü&gt;</code>.
+                            Klasör Adı Eki boşsa dosya adındaki ek aynen kullanılır. Dönem formatında
+                            <code>{YIL}</code> ve <code>{CEYREK}</code> yerine dosya adındaki yıl ve çeyrek yazılır.
+                            Büyük/küçük harf ve İ/ı farkı gözetilmez; birden fazla kural eşleşirse en uzun ek kazanır.
                         </div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-add-row="bulkRootPathOptions">
+                    <button type="button" class="btn btn-sm btn-outline-primary text-nowrap ms-3" data-add-row="bulkUploadRules">
                         <i class="bi bi-plus-lg me-1"></i>Ekle
                     </button>
                 </div>
-                <div class="table-responsive mb-4">
-                    <table class="table table-sm align-middle">
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm align-middle" style="min-width: 760px;">
                         <thead>
                             <tr class="text-muted small">
-                                <th style="width: 40%;">Görünen Ad</th>
-                                <th>Klasör Yolu</th>
+                                <th>Dosya Adı Eki</th>
+                                <th>Klasör Adı Eki</th>
+                                <th>Ana Klasör</th>
+                                <th>Dönem Klasörü Formatı</th>
                                 <th style="width: 1%;"></th>
                             </tr>
                         </thead>
-                        <tbody id="bulkRootPathOptionsBody"></tbody>
+                        <tbody id="bulkUploadRulesBody"></tbody>
                     </table>
                 </div>
 
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div>
-                        <div class="fw-medium">Bölge / Şube Ekleri</div>
-                        <div class="form-text mt-0">
-                            Dosya adında bu ifadelerden biri aranır; ifadeyle birlikte önündeki ad
-                            (ör. <code>ANKARA BÖLGE MÜDÜRLÜĞÜ</code>) klasör adı olarak kullanılır.
-                            Büyük/küçük harf ve İ/ı farkı gözetilmez.
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary text-nowrap ms-3" data-add-row="regionSuffixes">
-                        <i class="bi bi-plus-lg me-1"></i>Ekle
-                    </button>
-                </div>
-                <div class="table-responsive mb-4">
-                    <table class="table table-sm align-middle">
-                        <thead>
-                            <tr class="text-muted small">
-                                <th>Ek</th>
-                                <th style="width: 1%;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="regionSuffixesBody"></tbody>
-                    </table>
+                <div class="border rounded-3 p-3 mb-4 bg-body-tertiary">
+                    <label for="rulePreviewInput" class="form-label fw-medium small mb-1">
+                        <i class="bi bi-eye me-1"></i>Kuralları dene
+                    </label>
+                    <input type="text" id="rulePreviewInput" class="form-control form-control-sm"
+                           value="BAŞKENT KURUMSAL ŞUBESİ 2026 - 3.Çeyrek.pdf" />
+                    <div class="small mt-2" id="rulePreviewResult"></div>
+                    <div class="form-text">Henüz kaydedilmemiş değişiklikler de önizlemeye yansır.</div>
                 </div>
 
                 <button type="button" id="drivePathsSaveBtn" class="btn btn-primary btn-lg w-100 shadow-sm">
@@ -117,5 +108,6 @@
 
 @section Scripts {
     <script>window.drivePathConfig = @Html.Raw(JsonSerializer.Serialize(Model, jsonOptions));</script>
+    <script src="~/js/drive-path-resolver.js" asp-append-version="true"></script>
     <script src="~/js/drive-paths.js" asp-append-version="true"></script>
 }
