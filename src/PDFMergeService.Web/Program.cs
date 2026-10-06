@@ -30,6 +30,7 @@ builder.Services.Configure<DrivePathConfigSettings>(
     builder.Configuration.GetSection("DrivePathConfig"));
 
 builder.Services.AddPdfServices();
+builder.Services.AddSingleton<PDFMergeService.Web.Services.ChangelogService>();
 builder.Services.AddAuthServices(builder.Configuration);
 
 builder.Services.AddControllersWithViews(options =>

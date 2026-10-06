@@ -177,6 +177,64 @@ body {
     border-radius: 9px;
 }
 
+/* "Yenilikler" bağlantısında görülmemiş güncelleme işareti */
+.app-nav-dot {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.4rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: #ffd43b;
+    box-shadow: 0 0 0 2px #dc0005;
+}
+
+/* ── Yenilikler sayfası ── */
+.changelog-entry {
+    position: relative;
+    padding-left: 1.5rem;
+    padding-bottom: 1.75rem;
+    border-left: 2px solid var(--bs-border-color);
+}
+
+.changelog-entry:last-child {
+    padding-bottom: 0;
+}
+
+.changelog-entry::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 0.3rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--bs-primary);
+}
+
+.changelog-entry:first-child::before {
+    background: var(--bs-primary);
+}
+
+.changelog-item + .changelog-item {
+    margin-top: 1rem;
+}
+
+.changelog-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+}
+
+.changelog-tag-new         { color: #0a7a3d; background: #e3f6ea; }
+.changelog-tag-improvement { color: #0b5cad; background: #e3effb; }
+.changelog-tag-fix         { color: #9a5b00; background: #fdf1dc; }
+
 /* ── Card header ikon rozeti (login brand logosu ile aynı dil) ── */
 .card-header-icon {
     display: inline-flex;

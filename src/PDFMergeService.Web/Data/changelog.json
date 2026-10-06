@@ -1,0 +1,76 @@
+[
+  {
+    "Id": "2026-10-06",
+    "Date": "2026-10-06",
+    "Title": "Drive Aktarım ve PDF birleştirme iyileştirmeleri",
+    "Items": [
+      {
+        "Type": "new",
+        "Title": "Toplu yüklemede hedef klasör otomatik bulunuyor",
+        "Description": "Drive Aktarım › Toplu Yükleme'de dosyaları seçtiğinizde ana klasör, bölge/şube klasörü ve dönem klasörü dosya adından otomatik belirlenir. Örneğin \"BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek.pdf\" dosyası Kurumsal Şubeler › BAŞKENT KURUMSAL ŞUBELER › 2026 - 3. Çeyrek klasörüne gider. Artık klasör kökü seçmenize gerek yok; Kurumsal ve Bölge raporlarını aynı yüklemede karışık seçebilirsiniz. Yüklemeden önce tablodaki hedef klasörleri kontrol edip gerekirse düzeltebilirsiniz."
+      },
+      {
+        "Type": "new",
+        "Title": "SharePoint'te dosyayı kimin yüklediği görünüyor",
+        "Description": "Drive Aktarım ile yüklediğiniz dosyalar SharePoint'e sizin sicilinizle kaydedilir; dosyayı kimin yüklediği SharePoint tarafında görülebilir. Sizin için ek bir işlem gerekmez."
+      },
+      {
+        "Type": "fix",
+        "Title": "100'den fazla dosyada sıralama düzeltildi",
+        "Description": "PDF Birleştir ve Klasör Birleştirme'de dosyalar artık numaralarına göre doğru sıralanır: 1, 2, … 99, 100, 101. Önceden 100 ve sonrası 10 ile 11 arasına giriyordu. Klasör Birleştirme'de alt klasörler de aynı şekilde sıralanır."
+      },
+      {
+        "Type": "improvement",
+        "Title": "PDF Birleştir dosya sınırları güncellenebilir hale geldi",
+        "Description": "PDF Birleştir'deki en fazla dosya sayısı ve dosya başına boyut sınırı artık yönetici tarafından ayarlanabilir. Geçerli sınırlar dosya yükleme alanının altında yazar; daha yüksek bir sınıra ihtiyacınız olursa yöneticinize başvurun."
+      },
+      {
+        "Type": "new",
+        "Title": "Drive Yolları sayfası",
+        "Description": "Menüdeki Drive Yolları sayfasından Tekli Yükleme'nin site seçeneklerini, toplu yükleme sitesini ve toplu yükleme kurallarını (dosya adı eki, klasör adı eki, ana klasör, dönem klasörü formatı) ekleyip düzenleyebilirsiniz. Ana klasöre site alt yolunu yazmayın: webPath \"performans\" ise \"/Kurumsal Şubeler\" yazın. \"Kuralları dene\" kutusuna bir dosya adı yazarak hedef klasörü kaydetmeden önce görebilirsiniz. Değişiklikler kaydedildiği anda geçerli olur.",
+        "AdminOnly": true
+      },
+      {
+        "Type": "new",
+        "Title": "PDF Ayarları sayfası",
+        "Description": "Menüdeki PDF Ayarları sayfasından PDF Birleştir'in en fazla dosya sayısını (2–1000) ve dosya başına boyut sınırını (1–500 MB) değiştirebilirsiniz. Birleştirme kullanıcının tarayıcısında yapıldığı için çok yüksek değerler tarayıcıyı zorlayabilir.",
+        "AdminOnly": true
+      }
+    ]
+  },
+  {
+    "Id": "2026-07-27",
+    "Date": "2026-07-27",
+    "Title": "Giriş ekranı ve yeni görünüm",
+    "Items": [
+      {
+        "Type": "new",
+        "Title": "Kurumsal hesapla giriş",
+        "Description": "ReportDeck'e artık Windows (AD) kullanıcı adınız ve şifrenizle giriş yapıyorsunuz. Uygulamayı yalnızca yetkilendirilmiş kullanıcılar kullanabilir; erişiminiz yoksa yöneticinize başvurun."
+      },
+      {
+        "Type": "improvement",
+        "Title": "Yenilenen tasarım",
+        "Description": "Giriş ekranı ve tüm sayfalar yeni ReportDeck görünümüyle güncellendi."
+      },
+      {
+        "Type": "new",
+        "Title": "Aktivite Logları",
+        "Description": "Menüdeki Aktivite Logları sayfasından giriş/çıkış, PDF birleştirme, Drive aktarımı ve ayar değişikliklerini tarih ve kullanıcıya göre filtreleyerek izleyebilirsiniz.",
+        "AdminOnly": true
+      }
+    ]
+  },
+  {
+    "Id": "2026-07-21",
+    "Date": "2026-07-21",
+    "Title": "Drive Aktarım",
+    "Items": [
+      {
+        "Type": "new",
+        "Title": "PDF'leri doğrudan SharePoint'e aktarın",
+        "Description": "Drive Aktarım sekmesinden PDF dosyalarını SharePoint'e yükleyebilirsiniz. Tekli Yükleme'de site ve hedef klasörü seçip tek dosya gönderirsiniz; Toplu Yükleme'de birden fazla dosyayı tek seferde gönderirsiniz. Birleştirilmiş raporları \"Birleştirilmiş mi?\" sütunundan işaretleyebilirsiniz."
+      }
+    ]
+  }
+]
