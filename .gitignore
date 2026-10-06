@@ -36,6 +36,9 @@ artifacts/
 *.log
 logs/
 
+## Runtime config (edited from the admin UI, must not be overwritten by deploys)
+drive-paths.json
+
 ## OS
 .DS_Store
 Thumbs.db

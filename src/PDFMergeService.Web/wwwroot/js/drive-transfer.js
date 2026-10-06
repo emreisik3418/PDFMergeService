@@ -85,9 +85,31 @@ driveBulkRootPath.addEventListener('change', () => {
     renderBulkTable();
 });
 
+// Drive Yolları sayfasında tanımlanan eklerden (ör. "BÖLGE MÜDÜRLÜĞÜ") bölge desenini kurar.
+// Türkçe harfler (İ/i, I/ı, Ö/ö...) düz /i bayrağıyla katlanmadığı için her harf
+// tr-TR büyük/küçük haliyle karakter sınıfına açılır; boşluklar herhangi bir boşluk dizisine uyar.
+const regionPattern = buildRegionPattern(window.driveRegionSuffixes || []);
+
+function buildRegionPattern(suffixes) {
+    const alternatives = suffixes
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(s => Array.from(s).map(ch => {
+            if (/\s/.test(ch)) return '\\s+';
+            const upper = ch.toLocaleUpperCase('tr-TR');
+            const lower = ch.toLocaleLowerCase('tr-TR');
+            if (upper === lower) return ch.replace(/[.*+?^${}()|[\]\\\/-]/g, '\\$&');
+            return `[${upper}${lower}]`;
+        }).join('').replace(/(\\s\+)+/g, '\\s+'));
+
+    if (alternatives.length === 0) return null;
+    return new RegExp(`([^\\-–—]+?)\\s*(?:${alternatives.join('|')})`, 'i');
+}
+
 function resolveDrivePath(fileName, rootPath) {
+    if (!regionPattern) return '';
     const base = fileName.replace(/\.pdf$/i, '');
-    const regionMatch = base.match(/([^\-–—]+?)\s*(?:B[Öö]LGE\s+M[Üü]D[Üü]RL[Üü][Ğğ][Üü]|KURUMSAL\s+ŞUBES[İi]|T[İi]CAR[İi]\s+ŞUBES[İi]|ÖZEL)/i);
+    const regionMatch = base.match(regionPattern);
     const yearMatch = base.match(/\b(20\d{2})\b/);
     const quarterMatch = base.match(/(\d)\s*\.?\s*[Çç]eyrek/);
 

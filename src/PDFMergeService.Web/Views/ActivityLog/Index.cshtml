@@ -10,6 +10,7 @@
         ActivityEventType.SingleMerge => "Tekli Birleştirme",
         ActivityEventType.FolderMerge => "Klasör Birleştirme",
         ActivityEventType.DriveTransfer => "Drive Aktarım",
+        ActivityEventType.DrivePathConfigUpdate => "Drive Yolu Güncelleme",
         _ => type.ToString()
     };
 
@@ -20,6 +21,7 @@
         ActivityEventType.SingleMerge => "bg-primary",
         ActivityEventType.FolderMerge => "bg-info text-dark",
         ActivityEventType.DriveTransfer => "bg-warning text-dark",
+        ActivityEventType.DrivePathConfigUpdate => "bg-dark",
         _ => "bg-secondary"
     };
 }

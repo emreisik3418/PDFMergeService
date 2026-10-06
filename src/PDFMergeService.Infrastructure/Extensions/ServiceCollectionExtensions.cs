@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
         // Singleton: paylaşılan log dosyasına yazımı tek instance üzerinden serileştirmek için
         // (diğer servislerin Scoped olmasının aksine).
         services.AddSingleton<IActivityLogService, FileActivityLogService>();
+        services.AddSingleton<IDrivePathConfigService, FileDrivePathConfigService>();
         return services;
     }
 

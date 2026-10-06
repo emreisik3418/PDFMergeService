@@ -9,6 +9,12 @@
             <div class="card-header bg-white border-bottom py-3">
                 <h5 class="mb-0 fw-semibold text-primary d-flex align-items-center">
                     <span class="card-header-icon"><i class="bi bi-cloud-upload"></i></span>SharePoint'e Dosya Aktar
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a href="/drive-paths" class="btn btn-sm btn-outline-secondary ms-auto fw-normal">
+                            <i class="bi bi-gear me-1"></i>Yolları Düzenle
+                        </a>
+                    }
                 </h5>
             </div>
             <div class="card-body p-4">
@@ -56,7 +62,8 @@
                             @if (!Model.WebPathOptions.Any())
                             {
                                 <div class="form-text text-warning">
-                                    appsettings içinde <code>SharePointSettings:WebPathOptions</code> tanımlı değil.
+                                    Tanımlı site alt yolu yok.
+                                    @if (User.IsInRole("Admin")) { <a href="/drive-paths">Drive Yolları</a> } else { <text>Yöneticinize başvurun.</text> }
                                 </div>
                             }
                         </div>
@@ -117,9 +124,15 @@
                         <i class="bi bi-info-circle me-1"></i>
                         Dosya adından bölge/şube ve dönem (yıl - çeyrek) otomatik olarak ayıklanır ve seçtiğiniz
                         klasör kökü altında (<code>Kök/Bölge/Yıl - Çeyrek. Çeyrek</code>) hedef klasör önerilir.
-                        <strong>Bölge Müdürlüğü</strong>, <strong>Kurumsal Şubesi</strong>, <strong>Ticari Şubesi</strong>
-                        ve <strong>Özel</strong> ifadeleri tanınır. Yüklemeden önce aşağıdaki tablodan her dosyanın
-                        hedef klasörünü kontrol edip gerekirse düzeltebilirsiniz.
+                        @if (Model.RegionSuffixes.Any())
+                        {
+                            @Html.Raw("Tanınan ifadeler: " + string.Join(", ", Model.RegionSuffixes.Select(s => $"<strong>{System.Net.WebUtility.HtmlEncode(s)}</strong>")) + ".")
+                        }
+                        else
+                        {
+                            <strong class="text-warning">Tanımlı bölge/şube eki yok, hedef klasörler elle girilmelidir.</strong>
+                        }
+                        Yüklemeden önce aşağıdaki tablodan her dosyanın hedef klasörünü kontrol edip gerekirse düzeltebilirsiniz.
                     </div>
 
                     <div class="mb-3">
@@ -136,7 +149,8 @@
                         @if (!Model.BulkRootPathOptions.Any())
                         {
                             <div class="form-text text-warning">
-                                appsettings içinde <code>SharePointSettings:BulkRootPathOptions</code> tanımlı değil.
+                                Tanımlı klasör kökü yok.
+                                @if (User.IsInRole("Admin")) { <a href="/drive-paths">Drive Yolları</a> } else { <text>Yöneticinize başvurun.</text> }
                             </div>
                         }
                         else
@@ -200,5 +214,6 @@
 </div>
 
 @section Scripts {
+    <script>window.driveRegionSuffixes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RegionSuffixes));</script>
     <script src="~/js/drive-transfer.js" asp-append-version="true"></script>
 }

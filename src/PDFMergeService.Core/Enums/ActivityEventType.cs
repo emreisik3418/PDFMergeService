@@ -6,5 +6,6 @@ public enum ActivityEventType
     Logout,
     SingleMerge,
     FolderMerge,
-    DriveTransfer
+    DriveTransfer,
+    DrivePathConfigUpdate
 }

@@ -26,6 +26,9 @@ builder.Services.Configure<AuthorizedUsersSettings>(
 builder.Services.Configure<ActivityLogSettings>(
     builder.Configuration.GetSection("ActivityLog"));
 
+builder.Services.Configure<DrivePathConfigSettings>(
+    builder.Configuration.GetSection("DrivePathConfig"));
+
 builder.Services.AddPdfServices();
 builder.Services.AddAuthServices(builder.Configuration);
 

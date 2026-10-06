@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using PDFMergeService.Core.Enums;
 using PDFMergeService.Core.Interfaces;
 using PDFMergeService.Core.Models;
-using PDFMergeService.Core.Settings;
 using PDFMergeService.Web.ViewModels.DriveTransfer;
 
 namespace PDFMergeService.Web.Controllers;
@@ -11,28 +9,33 @@ namespace PDFMergeService.Web.Controllers;
 public class DriveTransferController : Controller
 {
     private readonly IDriveTransferService _driveTransferService;
-    private readonly SharePointSettings _sharePointSettings;
+    private readonly IDrivePathConfigService _drivePathConfigService;
     private readonly IActivityLogService _activityLogService;
     private readonly ILogger<DriveTransferController> _logger;
 
     public DriveTransferController(
         IDriveTransferService driveTransferService,
-        IOptions<SharePointSettings> sharePointSettings,
+        IDrivePathConfigService drivePathConfigService,
         IActivityLogService activityLogService,
         ILogger<DriveTransferController> logger)
     {
         _driveTransferService = driveTransferService;
-        _sharePointSettings = sharePointSettings.Value;
+        _drivePathConfigService = drivePathConfigService;
         _activityLogService = activityLogService;
         _logger = logger;
     }
 
     [HttpGet("/drive-transfer")]
-    public IActionResult Index() => View(new DriveTransferIndexViewModel
+    public async Task<IActionResult> Index()
     {
-        WebPathOptions = _sharePointSettings.WebPathOptions,
-        BulkRootPathOptions = _sharePointSettings.BulkRootPathOptions
-    });
+        var config = await _drivePathConfigService.GetAsync();
+        return View(new DriveTransferIndexViewModel
+        {
+            WebPathOptions = config.WebPathOptions,
+            BulkRootPathOptions = config.BulkRootPathOptions,
+            RegionSuffixes = config.RegionSuffixes
+        });
+    }
 
     [HttpPost("/drive-transfer/upload")]
     public async Task<IActionResult> Upload([FromForm] DriveTransferUploadViewModel model)
@@ -71,10 +74,11 @@ public class DriveTransferController : Controller
         if (files == null || files.Count == 0)
             return BadRequest(new { error = "Lütfen en az bir PDF dosyası seçin." });
 
-        if (string.IsNullOrWhiteSpace(_sharePointSettings.BulkWebPath))
-            return StatusCode(500, new { error = "appsettings içinde SharePointSettings:BulkWebPath tanımlı değil." });
+        var config = await _drivePathConfigService.GetAsync();
+        if (string.IsNullOrWhiteSpace(config.BulkWebPath))
+            return StatusCode(500, new { error = "Toplu yükleme site alt yolu (BulkWebPath) tanımlı değil. Drive Yolları sayfasından ayarlayın." });
 
-        var webPath = _sharePointSettings.BulkWebPath.Trim();
+        var webPath = config.BulkWebPath.Trim();
         var results = new List<object>();
         var allSuccess = true;
 
