@@ -1,7 +1,25 @@
 'use strict';
 
 // ─── State ───────────────────────────────────────────────────────────────────
-let scannedFolders = [];   // { folderName, folderPath, pdfFiles[] }
+let scannedFolders = [];   // { folderName, folderPath, pdfFiles[], outputName }
+let scannedRootPath = '';
+
+// Windows dosya adında kullanılamayan karakterler.
+const INVALID_FILENAME_CHARS = /[\\/:*?"<>|]/;
+
+// ZIP, taranan ana klasörün adını alır: ".../Kurumsal Şubeler 2026 - 3. Çeyrek" → "Kurumsal Şubeler 2026 - 3. Çeyrek.zip"
+function zipFileName() {
+    const rootName = scannedRootPath.replace(/[\\/]+$/, '').split(/[\\/]/).pop()
+        .replace(/[\\/:*?"<>|]/g, '_').trim();
+    return `${rootName && !/^[A-Za-z]:$/.test(rootName) ? rootName : 'TopluBirlestirme'}.zip`;
+}
+
+// Varsayılan ad, ana klasördeki rapor tipi ve dönemden Drive toplu yükleme kurallarının tersiyle önerilir:
+// "Kurumsal Şubeler 2026 - 3. Çeyrek" › "Başkent Kurumsal" → "BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek".
+// Uyan kural yoksa klasör adı (+ ana klasörde dönem varsa dönem).
+const defaultOutputName = (folder, rootPath) => typeof DrivePathResolver !== 'undefined'
+    ? DrivePathResolver.suggestMergedFileName(folder.folderName, rootPath, window.driveBulkUploadRules || [])
+    : folder.folderName;
 
 // ─── DOM Refs ─────────────────────────────────────────────────────────────────
 const rootPathInput      = document.getElementById('rootPath');
@@ -47,7 +65,8 @@ async function scanFolders() {
             return;
         }
 
-        scannedFolders = await res.json();
+        scannedRootPath = path;
+        scannedFolders = (await res.json()).map(f => ({ ...f, outputName: defaultOutputName(f, path) }));
 
         if (scannedFolders.length === 0) {
             emptyState.classList.remove('d-none');
@@ -93,6 +112,13 @@ function renderFolderList() {
                     ${escHtml(folder.folderName)}
                 </button>
             </td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control output-name" data-idx="${idx}"
+                           value="${escHtml(folder.outputName)}" title="${escHtml(folder.outputName)}" aria-label="Birleştirilmiş dosya adı" />
+                    <span class="input-group-text">.pdf</span>
+                </div>
+            </td>
             <td class="text-center">
                 <span class="badge bg-secondary">${folder.pdfCount}</span>
             </td>
@@ -126,14 +152,58 @@ function renderFolderList() {
 
     // checkbox events
     document.querySelectorAll('.folder-check').forEach(cb => {
-        cb.addEventListener('change', updateSelectAll);
+        cb.addEventListener('change', () => { updateSelectAll(); validateOutputNames(); });
     });
+
+    document.querySelectorAll('.output-name').forEach(input => {
+        input.addEventListener('input', () => {
+            scannedFolders[parseInt(input.dataset.idx)].outputName = input.value;
+            input.title = input.value;
+            validateOutputNames();
+        });
+    });
+}
+
+// Seçili klasörlerin çıktı adlarını denetler, hatalı alanları işaretler; ilk hatanın mesajını döner.
+function validateOutputNames() {
+    const checks = [...document.querySelectorAll('.folder-check')];
+    const inputs = [...document.querySelectorAll('.output-name')];
+    const seen = new Map();
+    let firstError = null;
+
+    inputs.forEach(input => input.classList.remove('is-invalid'));
+
+    scannedFolders.forEach((folder, i) => {
+        if (!checks[i]?.checked) return;
+        const name = folder.outputName.trim().replace(/\.pdf$/i, '');
+        let error = null;
+
+        if (!name) error = `"${folder.folderName}" için dosya adı boş.`;
+        else if (INVALID_FILENAME_CHARS.test(name)) error = `"${name}" dosya adında \\ / : * ? " < > | karakterleri kullanılamaz.`;
+        else {
+            const key = name.toLocaleUpperCase('tr-TR');
+            if (seen.has(key)) {
+                error = `"${name}" adı birden fazla klasörde kullanılmış.`;
+                inputs[seen.get(key)].classList.add('is-invalid');
+            } else {
+                seen.set(key, i);
+            }
+        }
+
+        if (error) {
+            inputs[i].classList.add('is-invalid');
+            firstError ??= error;
+        }
+    });
+
+    return firstError;
 }
 
 // ─── Select All ───────────────────────────────────────────────────────────────
 selectAll.addEventListener('change', () => {
     document.querySelectorAll('.folder-check').forEach(cb => cb.checked = selectAll.checked);
     updateMergeBtn();
+    validateOutputNames();
 });
 
 function updateSelectAll() {
@@ -155,6 +225,9 @@ mergeAllBtn.addEventListener('click', async () => {
 
     if (selected.length === 0) { showToast('En az bir klasör seçin.', 'warning'); return; }
 
+    const nameError = validateOutputNames();
+    if (nameError) { showToast(nameError, 'warning'); return; }
+
     setMerging(true);
     showMergeProgress(true, `0 / ${selected.length} birleştiriliyor...`, 0);
 
@@ -162,7 +235,8 @@ mergeAllBtn.addEventListener('click', async () => {
         folders: selected.map(f => ({
             folderName: f.folderName,
             folderPath: f.folderPath,
-            pdfFiles: f.pdfFiles
+            pdfFiles: f.pdfFiles,
+            outputFileName: f.outputName.trim().replace(/\.pdf$/i, '')
         })),
         footer: collectFooterSettings()
     };
@@ -198,7 +272,7 @@ mergeAllBtn.addEventListener('click', async () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `TopluBirlestirme_${new Date().toISOString().slice(0,10)}.zip`;
+        a.download = zipFileName();
         a.click();
         URL.revokeObjectURL(url);
 

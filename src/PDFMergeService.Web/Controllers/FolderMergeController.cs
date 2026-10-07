@@ -14,6 +14,7 @@ public class FolderMergeController : Controller
     private readonly IPdfMergeService _pdfMergeService;
     private readonly IPdfFooterService _pdfFooterService;
     private readonly IActivityLogService _activityLogService;
+    private readonly IDrivePathConfigService _drivePathConfigService;
     private readonly ILogger<FolderMergeController> _logger;
 
     public FolderMergeController(
@@ -21,17 +22,23 @@ public class FolderMergeController : Controller
         IPdfMergeService pdfMergeService,
         IPdfFooterService pdfFooterService,
         IActivityLogService activityLogService,
+        IDrivePathConfigService drivePathConfigService,
         ILogger<FolderMergeController> logger)
     {
         _folderScanService = folderScanService;
         _pdfMergeService = pdfMergeService;
         _pdfFooterService = pdfFooterService;
         _activityLogService = activityLogService;
+        _drivePathConfigService = drivePathConfigService;
         _logger = logger;
     }
 
     [HttpGet("/folder-merge")]
-    public IActionResult Index() => View();
+    public async Task<IActionResult> Index()
+    {
+        var config = await _drivePathConfigService.GetAsync();
+        return View(new FolderMergeIndexViewModel { BulkUploadRules = config.BulkUploadRules });
+    }
 
     [HttpPost("/folder-merge/scan")]
     public async Task<IActionResult> Scan([FromBody] ScanRequestDto dto)
@@ -89,11 +96,12 @@ public class FolderMergeController : Controller
             return BadRequest(new { error = "Birleştirilecek klasör bulunamadı." });
 
         var footer = MapFooterSettings(model.Footer);
-        var today = DateTime.Now.ToString("yyyyMMdd");
 
         using var zipStream = new MemoryStream();
         using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
         {
+            var usedEntryNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var folder in model.Folders)
             {
                 if (folder.PdfFiles == null || folder.PdfFiles.Count == 0) continue;
@@ -114,7 +122,7 @@ public class FolderMergeController : Controller
                     byte[] merged = await _pdfMergeService.MergeAsync(request);
                     byte[] final = await _pdfFooterService.ApplyFooterAsync(merged, footer);
 
-                    var entryName = $"{SanitizeFileName(folder.FolderName)}_{today}.pdf";
+                    var entryName = UniqueEntryName(BuildOutputBaseName(folder), usedEntryNames);
                     var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
                     await using var entryStream = entry.Open();
                     await entryStream.WriteAsync(final);
@@ -129,7 +137,8 @@ public class FolderMergeController : Controller
         }
 
         zipStream.Position = 0;
-        var zipName = $"TopluBirlestirme_{today}.zip";
+        // İndirilen dosyanın adını ön yüz ana klasör adından verir; bu yalnızca doğrudan isteklerde görünür.
+        var zipName = "TopluBirlestirme.zip";
 
         await _activityLogService.LogAsync(new ActivityLogEntry
         {
@@ -158,6 +167,27 @@ public class FolderMergeController : Controller
         MarginHorizontal = vm.MarginHorizontal,
         LogoSkipPages = vm.LogoSkipPages
     };
+
+    // Kullanıcının verdiği ad (uzantısız) temizlenerek kullanılır; boşsa klasör adı.
+    // (Ön yüz adı kuralların tersinden önerir ve boş ad göndermez; bu yalnızca güvenlik ağı.)
+    private static string BuildOutputBaseName(FolderInfoViewModel folder)
+    {
+        var name = folder.OutputFileName?.Trim() ?? string.Empty;
+        if (name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            name = name[..^4].TrimEnd();
+
+        name = SanitizeFileName(name).Trim().TrimEnd('.');
+        return name.Length > 0 ? name : SanitizeFileName(folder.FolderName);
+    }
+
+    // Aynı adlı iki dosya ZIP'te birbirini ezmesin: "Ad.pdf", "Ad (2).pdf", ...
+    private static string UniqueEntryName(string baseName, HashSet<string> used)
+    {
+        var candidate = $"{baseName}.pdf";
+        for (var n = 2; !used.Add(candidate); n++)
+            candidate = $"{baseName} ({n}).pdf";
+        return candidate;
+    }
 
     private static string SanitizeFileName(string name)
     {

@@ -1,5 +1,22 @@
 [
   {
+    "Id": "2026-10-07",
+    "Date": "2026-10-07",
+    "Title": "Klasör Birleştirme'de akıllı dosya adları",
+    "Items": [
+      {
+        "Type": "new",
+        "Title": "Birleştirilmiş dosya adları otomatik öneriliyor ve düzenlenebiliyor",
+        "Description": "Klasör Birleştirme'de Tara'ya bastıktan sonra her klasörün yanında oluşacak PDF'in adı yazar. Ad, ana klasördeki rapor tipi ve dönemden önerilir: \"Kurumsal Şubeler 2026 - 3. Çeyrek\" ana klasöründeki \"Başkent Kurumsal\" klasörü \"BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek\" olur; özel şubeler için \"ÖZEL … ŞUBESİ\" biçimi kullanılır. Bu adlar Drive Aktarım › Toplu Yükleme'nin tanıdığı adlarla aynıdır, yani birleştirdiğiniz dosyaları doğrudan toplu yükleyebilirsiniz. Birleştirmeden önce adları değiştirebilirsiniz; .pdf uzantısı otomatik eklenir. Boş, \\ / : * ? \" < > | içeren ya da iki klasörde aynı olan adlar kırmızıyla işaretlenir ve düzeltilene kadar birleştirme başlamaz."
+      },
+      {
+        "Type": "improvement",
+        "Title": "Dosya ve ZIP adlarından tarih kaldırıldı",
+        "Description": "Birleştirilen dosyaların adına artık indirme tarihi eklenmiyor. ZIP dosyası, taradığınız ana klasörün adını alır (ör. \"Kurumsal Şubeler 2026 - 3. Çeyrek.zip\")."
+      }
+    ]
+  },
+  {
     "Id": "2026-10-06",
     "Date": "2026-10-06",
     "Title": "Drive Aktarım ve PDF birleştirme iyileştirmeleri",

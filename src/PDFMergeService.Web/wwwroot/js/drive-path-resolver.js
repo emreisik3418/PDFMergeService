@@ -129,5 +129,85 @@ const DrivePathResolver = (() => {
         };
     }
 
-    return { compile, resolve };
+    // ── Klasör Birleştirme için dosya adı önerisi ──────────────────────────────
+    // Kuralları tersinden kullanır: ana klasör adındaki rapor tipine uyan kuralın kalıbıyla, toplu
+    // yüklemenin tanıyacağı adı üretir. Böylece birleştirilen dosya sonra Drive'a yüklenirken aynı
+    // kuralla doğru klasöre gider.
+    //   ana klasör "Kurumsal Şubeler 2026 - 3. Çeyrek", alt klasör "Başkent Kurumsal"
+    //     → "BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek"   (kural: "KURUMSAL ŞUBESİ")
+    //   ana klasör "Özel Şubeler 2026 - 1. Çeyrek", alt klasör "B.Bağdat Caddesi"
+    //     → "ÖZEL B.BAĞDAT CADDESİ ŞUBESİ 2026 - 1. Çeyrek" (kural: "ÖZEL {AD} ŞUBESİ")
+
+    const PERIOD_REGEX = /(20\d{2})\s*[-–—]?\s*(\d)\s*\.?\s*[Çç]eyrek/;
+    const upperTr = text => text.toLocaleUpperCase('tr-TR');
+    const words = text => upperTr(text).split(/\s+/).filter(Boolean);
+    // Tekil/çoğul farkını tolere etmek için kelimenin ilk 4 harfi: ŞUBESİ / ŞUBELER → ŞUBE, MÜDÜRLÜĞÜ / MÜDÜRLÜKLERİ → MÜDÜ
+    const stem = word => word.slice(0, 4);
+    const lastSegment = path => (path || '').trim().replace(/[\\/]+$/, '').split(/[\\/]/).pop() || '';
+
+    function parseRootFolder(rootFolderName) {
+        const match = rootFolderName.match(PERIOD_REGEX);
+        return {
+            period: match ? `${match[1]} - ${match[2]}. Çeyrek` : '',
+            type: (match ? rootFolderName.replace(match[0], ' ') : rootFolderName).replace(/[\s\-–—_]+$/, '').replace(/^[\s\-–—_]+/, '').trim()
+        };
+    }
+
+    // Rapor tipine uyan kural: önce Ana Klasör'ün son parçası ya da Klasör Adı birebir, sonra kalıptaki
+    // sabit kelimelerin tamamının (kök olarak) rapor tipinde geçmesi.
+    function findRuleForType(type, rules) {
+        if (!type) return null;
+        const typeKey = words(type).join(' ');
+        const typeStems = new Set(words(type).map(stem));
+        let best = null;
+
+        for (const rule of rules || []) {
+            const pattern = (rule.fileSuffix || '').trim();
+            const literalWords = words(pattern.replace(NAME_TOKEN, ' '));
+            if (literalWords.length === 0) continue;
+
+            const exact = [lastSegment(rule.rootPath), (rule.folderSuffix || '').replace(NAME_TOKEN, ' ')]
+                .some(candidate => candidate.trim() && words(candidate).join(' ') === typeKey);
+            const stemMatch = literalWords.every(w => typeStems.has(stem(w)));
+            if (!exact && !stemMatch) continue;
+
+            const score = (exact ? 1000 : 0) + specificity(pattern);
+            if (!best || score > best.score) best = { rule, score };
+        }
+        return best?.rule || null;
+    }
+
+    // Alt klasör adında kalıbın sabit kelimeleri zaten varsa tekrar etmesin:
+    // "Başkent Kurumsal" + "{AD} KURUMSAL ŞUBESİ" → ad "BAŞKENT"; "Özel B.Bağdat" + "ÖZEL {AD} ŞUBESİ" → ad "B.BAĞDAT".
+    function trimOverlap(nameWords, beforeWords, afterWords) {
+        let result = [...nameWords];
+        for (let n = Math.min(beforeWords.length, result.length); n > 0; n--) {
+            if (beforeWords.slice(-n).every((w, i) => stem(w) === stem(result[i]))) { result = result.slice(n); break; }
+        }
+        for (let n = Math.min(afterWords.length, result.length); n > 0; n--) {
+            if (afterWords.slice(0, n).every((w, i) => stem(w) === stem(result[result.length - n + i]))) { result = result.slice(0, -n); break; }
+        }
+        return result;
+    }
+
+    function suggestMergedFileName(subfolderName, rootPath, rules) {
+        const { period, type } = parseRootFolder(lastSegment(rootPath));
+        const sub = subfolderName.trim();
+        const withPeriod = name => period && !PERIOD_REGEX.test(name) ? `${name} ${period}` : name;
+
+        const rule = findRuleForType(type, rules);
+        if (!rule) return withPeriod(sub);
+
+        const pattern = rule.fileSuffix.trim();
+        const at = pattern.includes(NAME_TOKEN) ? pattern.indexOf(NAME_TOKEN) : 0;
+        const before = pattern.includes(NAME_TOKEN) ? pattern.slice(0, at) : '';
+        const after = pattern.includes(NAME_TOKEN) ? pattern.slice(at + NAME_TOKEN.length) : pattern;
+
+        const name = trimOverlap(words(sub.replace(PERIOD_REGEX, ' ')), words(before), words(after));
+        if (name.length === 0) return withPeriod(sub);
+
+        return withPeriod([...words(before), ...name, ...words(after)].join(' '));
+    }
+
+    return { compile, resolve, suggestMergedFileName };
 })();
