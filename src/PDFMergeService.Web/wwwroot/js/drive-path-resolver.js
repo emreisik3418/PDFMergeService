@@ -238,8 +238,9 @@ const DrivePathResolver = (() => {
         for (let i = segments.length - 1; i >= relStart; i--) {
             if (segments[i].rest) { nameIdx = i; break; }
         }
-        const withPeriod = name => (period ? `${name} ${period}` : name).trim();
-        if (nameIdx < 0) return { fileName: withPeriod(lastSegment(relativePath)), directory: '', period };
+        // Ad kısmı her zaman büyük harf (dosya adı kuralı); dönem Drive klasörleriyle aynı kalsın diye olduğu gibi: "2026 - 3. Çeyrek"
+        const withPeriod = name => (period ? `${upperTr(name)} ${period}` : upperTr(name)).trim();
+        if (nameIdx < 0) return { fileName: period || upperTr(lastSegment(relativePath)), directory: '', period };
 
         // Rapor tipi: ad klasörünün üstündeki, bir kurala uyan en yakın klasör ("Bireysel ve Karma Şubeler")
         let rule = null, typeIdx = -1;

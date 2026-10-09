@@ -10,6 +10,11 @@
         "Description": "Klasör Birleştirme artık alt klasörlerin altına da iner. \"Bireysel ve Karma Şubeler › Akdeniz › Akdeniz Bulvarı Antalya › 2026 - Ağustos\" gibi bir yapıda her dönem klasörü ayrı birleştirilir ve \"AKDENİZ BULVARI ANTALYA ŞUBESİ 2026 - Ağustos\" adını alır; ZIP içinde bölge klasörüne (Akdeniz/) konur. Tabloda klasörün üst yolu ve ZIP'teki yeri görünür."
       },
       {
+        "Type": "improvement",
+        "Title": "Önerilen dosya adları her zaman büyük harf",
+        "Description": "Klasör Birleştirme'de önerilen adların şube/klasör kısmı, klasör adı küçük harfle yazılmış olsa da büyük harfe çevrilir (ör. \"akdeniz bulvarı antalya\" → \"AKDENİZ BULVARI ANTALYA ŞUBESİ\"). Dönem kısmı (\"2026 - 3. Çeyrek\", \"2026 - Ağustos\") Drive klasörleriyle aynı yazımda kalır."
+      },
+      {
         "Type": "new",
         "Title": "Aylık dönemler ve dönem filtresi",
         "Description": "Çeyreğin yanında \"2026 - Ağustos\" gibi aylık dönemler de tanınır. Taramada birden fazla dönem bulunursa tablonun üstünde Dönem seçimi çıkar; varsayılan olarak en güncel dönem seçilir ve yalnızca o dönemin klasörleri birleştirilir."
