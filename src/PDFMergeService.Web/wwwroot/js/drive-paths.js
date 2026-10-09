@@ -168,6 +168,7 @@ function escHtml(str) {
 // ---- Kural önizleme ----
 
 const rulePreviewInput  = document.getElementById('rulePreviewInput');
+const rulePreviewRegion = document.getElementById('rulePreviewRegion');
 const rulePreviewResult = document.getElementById('rulePreviewResult');
 
 function updatePreview() {
@@ -175,14 +176,15 @@ function updatePreview() {
     if (!fileName) { rulePreviewResult.innerHTML = ''; return; }
 
     const compiled = DrivePathResolver.compile(lists.bulkUploadRules.items, lists.bulkPathOverrides.items);
-    const result = DrivePathResolver.resolve(fileName, compiled);
+    const result = DrivePathResolver.resolve(fileName, compiled, { region: rulePreviewRegion.value.trim() });
     rulePreviewResult.innerHTML = result
         ? `<i class="bi bi-arrow-return-right me-1 text-success"></i><code>${escHtml(result.path)}</code>
            <span class="text-muted">(${escHtml(result.label)})</span>`
-        : '<i class="bi bi-x-circle me-1 text-danger"></i><span class="text-danger">Eşleşen kural/eşleştirme yok veya dosya adında yıl/çeyrek bulunamadı.</span>';
+        : '<i class="bi bi-x-circle me-1 text-danger"></i><span class="text-danger">Eşleşen kural/eşleştirme yok, dosya adında dönem bulunamadı ya da {BOLGE} içeren kural için bölge girilmedi.</span>';
 }
 
 rulePreviewInput.addEventListener('input', updatePreview);
+rulePreviewRegion.addEventListener('input', updatePreview);
 
 Object.values(lists).forEach(renderList);
 updatePreview();

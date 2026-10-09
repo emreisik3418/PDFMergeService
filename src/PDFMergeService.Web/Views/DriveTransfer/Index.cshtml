@@ -143,7 +143,19 @@
 
                     <div class="mb-4">
                         <label class="form-label fw-medium">PDF Dosyaları</label>
-                        <input type="file" id="driveBulkFiles" class="form-control" accept="application/pdf" multiple />
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <input type="file" id="driveBulkFiles" class="form-control" accept="application/pdf" multiple style="max-width: 28rem;" />
+                            <span class="text-muted small">ya da</span>
+                            <label class="btn btn-outline-primary mb-0" for="driveBulkFolder">
+                                <i class="bi bi-folder2-open me-1"></i>Klasör Seç
+                            </label>
+                            <input type="file" id="driveBulkFolder" class="d-none" webkitdirectory multiple />
+                        </div>
+                        <div class="form-text">
+                            <strong>Klasör Seç</strong> ile klasör içindeki tüm PDF'ler eklenir ve her dosyanın bulunduğu klasör
+                            <em>bölge</em> olarak kullanılır (ör. Klasör Birleştirme ZIP'inden çıkan <code>Akdeniz/</code> klasörü →
+                            <code>AKDENİZ</code>). Bireysel ve Karma şubeler bu yolla yüklenmelidir.
+                        </div>
                         <div class="form-text">
                             Birleştirilmiş rapor ve onun tekli sayfa dosyalarını (kapak, segment vb.) aynı anda
                             seçip aynı klasöre gönderebilirsiniz — hangisinin "birleştirilmiş" (ACCIsMergedVersion)

@@ -71,7 +71,15 @@
                                 </li>
                                 <li>
                                     <strong>Dönem Klasörü</strong>nde <code>{YIL}</code> ve <code>{CEYREK}</code> dosya adındaki yıl/çeyrekle
-                                    doldurulur; boş bırakılırsa dönem klasörü açılmaz.
+                                    doldurulur; <code>{DONEM}</code> dosyadaki dönemi aynen yazar (<code>2026 - 3. Çeyrek</code> ya da
+                                    <code>2026 - Ağustos</code>). <code>{CEYREK}</code> içeren kurallar aylık dosyalara uygulanmaz.
+                                    Boş bırakılırsa dönem klasörü açılmaz.
+                                </li>
+                                <li>
+                                    <strong>Ana Klasör</strong> ve <strong>Klasör Adı</strong>'nda <code>{BOLGE}</code>, Drive Aktarım'da
+                                    <em>Klasör Seç</em> ile yüklenen dosyanın bulunduğu klasörün adıdır (büyük harfle). Ör. Bireysel ve Karma:
+                                    kalıp <code>{AD} ŞUBESİ</code>, Ana Klasör <code>/Bireysel ve Karma Şubeler/{BOLGE}</code>, Dönem <code>{DONEM}</code>.
+                                    Bölge bilinmeyen yüklemelerde bu kural atlanır.
                                 </li>
                                 <li>
                                     Ana Klasör site alt yolunu içermemeli (webPath <code>performans</code> ise <code>/Kurumsal Şubeler</code> yazın).
@@ -129,8 +137,12 @@
                     <label for="rulePreviewInput" class="form-label fw-medium small mb-1">
                         <i class="bi bi-eye me-1"></i>Kuralları ve eşleştirmeleri dene
                     </label>
-                    <input type="text" id="rulePreviewInput" class="form-control form-control-sm"
-                           value="ÖZEL BAŞKENT ŞUBESİ 2026 - 3. Çeyrek.pdf" />
+                    <div class="d-flex flex-wrap gap-2">
+                        <input type="text" id="rulePreviewInput" class="form-control form-control-sm flex-grow-1" style="min-width: 16rem; width: auto;"
+                               value="ÖZEL BAŞKENT ŞUBESİ 2026 - 3. Çeyrek.pdf" aria-label="Dosya adı" />
+                        <input type="text" id="rulePreviewRegion" class="form-control form-control-sm" style="max-width: 12rem;"
+                               placeholder="Bölge (ör. Akdeniz)" aria-label="Bölge" title="{BOLGE} içeren kurallar için: Klasör Seç'te dosyanın bulunduğu klasör" />
+                    </div>
                     <div class="small mt-2" id="rulePreviewResult"></div>
                     <div class="form-text">Henüz kaydedilmemiş değişiklikler de önizlemeye yansır.</div>
                 </div>

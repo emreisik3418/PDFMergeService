@@ -107,11 +107,12 @@ public class DrivePathSettingsController : Controller
                 return $"{name} ana klasör boş.";
 
             var unknown = UnknownToken(rule.FileSuffix, "{AD}")
-                       ?? UnknownToken(rule.FolderSuffix, "{AD}")
-                       ?? UnknownToken(rule.RootPath)
-                       ?? UnknownToken(rule.PeriodFolderFormat, "{YIL}", "{CEYREK}");
+                       ?? UnknownToken(rule.FolderSuffix, "{AD}", "{BOLGE}")
+                       ?? UnknownToken(rule.RootPath, "{BOLGE}")
+                       ?? UnknownToken(rule.PeriodFolderFormat, "{YIL}", "{CEYREK}", "{DONEM}");
             if (unknown != null)
-                return $"{name} tanınmayan ifade: {unknown}. Kalıpta {{AD}}, dönem formatında {{YIL}} ve {{CEYREK}} kullanılabilir.";
+                return $"{name} tanınmayan ifade: {unknown}. Kalıpta {{AD}}; Ana Klasör ve Klasör Adı'nda {{BOLGE}}; " +
+                       "dönem formatında {{YIL}}, {{CEYREK}} ve {{DONEM}} kullanılabilir.";
         }
 
         var duplicate = rules
@@ -132,9 +133,9 @@ public class DrivePathSettingsController : Controller
             if (o.TargetPath.Length == 0)
                 return $"\"{o.Contains}\" eşleştirmesinde hedef klasör boş.";
 
-            var unknown = UnknownToken(o.Contains) ?? UnknownToken(o.TargetPath, "{YIL}", "{CEYREK}");
+            var unknown = UnknownToken(o.Contains) ?? UnknownToken(o.TargetPath, "{YIL}", "{CEYREK}", "{DONEM}");
             if (unknown != null)
-                return $"\"{o.Contains}\" eşleştirmesinde tanınmayan ifade: {unknown}. Hedef klasörde {{YIL}} ve {{CEYREK}} kullanılabilir.";
+                return $"\"{o.Contains}\" eşleştirmesinde tanınmayan ifade: {unknown}. Hedef klasörde {{YIL}}, {{CEYREK}} ve {{DONEM}} kullanılabilir.";
         }
 
         var duplicate = overrides

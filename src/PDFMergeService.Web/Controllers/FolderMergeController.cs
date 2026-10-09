@@ -66,6 +66,7 @@ public class FolderMergeController : Controller
             {
                 FolderName = f.FolderName,
                 FolderPath = f.FolderPath,
+                RelativePath = f.RelativePath,
                 PdfFiles = f.PdfFiles.Select(Path.GetFileName).ToList()!
             }).ToList();
 
@@ -122,7 +123,7 @@ public class FolderMergeController : Controller
                     byte[] merged = await _pdfMergeService.MergeAsync(request);
                     byte[] final = await _pdfFooterService.ApplyFooterAsync(merged, footer);
 
-                    var entryName = UniqueEntryName(BuildOutputBaseName(folder), usedEntryNames);
+                    var entryName = UniqueEntryName(BuildOutputDirectory(folder) + BuildOutputBaseName(folder), usedEntryNames);
                     var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
                     await using var entryStream = entry.Open();
                     await entryStream.WriteAsync(final);
@@ -178,6 +179,18 @@ public class FolderMergeController : Controller
 
         name = SanitizeFileName(name).Trim().TrimEnd('.');
         return name.Length > 0 ? name : SanitizeFileName(folder.FolderName);
+    }
+
+    // ZIP içi klasör ("Akdeniz/"): her parça temizlenir; boş, "." ve ".." parçaları atılır (ZIP dışına yol açılamaz).
+    private static string BuildOutputDirectory(FolderInfoViewModel folder)
+    {
+        var parts = (folder.OutputDirectory ?? string.Empty)
+            .Split('/', '\\')
+            .Select(p => SanitizeFileName(p).Trim().TrimEnd('.'))
+            .Where(p => p.Length > 0 && p != "." && p != "..")
+            .ToList();
+
+        return parts.Count == 0 ? string.Empty : string.Join('/', parts) + "/";
     }
 
     // Aynı adlı iki dosya ZIP'te birbirini ezmesin: "Ad.pdf", "Ad (2).pdf", ...

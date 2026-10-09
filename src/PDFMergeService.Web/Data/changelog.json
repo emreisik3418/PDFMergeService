@@ -1,5 +1,33 @@
 [
   {
+    "Id": "2026-10-09",
+    "Date": "2026-10-09",
+    "Title": "Bireysel ve Karma Şubeler ve aylık raporlar",
+    "Items": [
+      {
+        "Type": "new",
+        "Title": "Alt alta klasörlerde birleştirme (Bölge › Şube › Dönem)",
+        "Description": "Klasör Birleştirme artık alt klasörlerin altına da iner. \"Bireysel ve Karma Şubeler › Akdeniz › Akdeniz Bulvarı Antalya › 2026 - Ağustos\" gibi bir yapıda her dönem klasörü ayrı birleştirilir ve \"AKDENİZ BULVARI ANTALYA ŞUBESİ 2026 - Ağustos\" adını alır; ZIP içinde bölge klasörüne (Akdeniz/) konur. Tabloda klasörün üst yolu ve ZIP'teki yeri görünür."
+      },
+      {
+        "Type": "new",
+        "Title": "Aylık dönemler ve dönem filtresi",
+        "Description": "Çeyreğin yanında \"2026 - Ağustos\" gibi aylık dönemler de tanınır. Taramada birden fazla dönem bulunursa tablonun üstünde Dönem seçimi çıkar; varsayılan olarak en güncel dönem seçilir ve yalnızca o dönemin klasörleri birleştirilir."
+      },
+      {
+        "Type": "new",
+        "Title": "Drive Aktarım'da Klasör Seç",
+        "Description": "Toplu Yükleme'de Klasör Seç ile bir klasördeki tüm PDF'leri tek seferde ekleyebilirsiniz. Her dosyanın bulunduğu klasör bölge olarak kullanılır; böylece Klasör Birleştirme ZIP'inden çıkan klasörü seçtiğinizde Bireysel ve Karma şubeler doğrudan /Bireysel ve Karma Şubeler/AKDENİZ/… gibi bölge klasörlerine gider."
+      },
+      {
+        "Type": "new",
+        "Title": "Kurallarda {DONEM} ve {BOLGE}",
+        "Description": "Drive Yolları › Toplu Yükleme Kuralları'nda Dönem Klasörü'ne {DONEM} yazarsanız dosyadaki dönem aynen kullanılır (2026 - 3. Çeyrek ya da 2026 - Ağustos); {CEYREK} içeren kurallar aylık dosyalara uygulanmaz. Ana Klasör ve Klasör Adı'nda {BOLGE}, Klasör Seç ile yüklenen dosyanın bulunduğu klasördür. Bireysel ve Karma için örnek kural: kalıp \"{AD} ŞUBESİ\", Ana Klasör \"/Bireysel ve Karma Şubeler/{BOLGE}\", Dönem \"{DONEM}\".",
+        "AdminOnly": true
+      }
+    ]
+  },
+  {
     "Id": "2026-10-07",
     "Date": "2026-10-07",
     "Title": "Klasör Birleştirme'de akıllı dosya adları",

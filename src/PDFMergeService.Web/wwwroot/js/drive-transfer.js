@@ -82,29 +82,56 @@ let bulkItems = [];
 // Drive Yolları sayfasında tanımlanan kurallar (bkz. drive-path-resolver.js).
 const bulkRules = DrivePathResolver.compile(window.driveBulkUploadRules || [], window.driveBulkPathOverrides || []);
 
-function resolveDrivePath(fileName) {
-    return DrivePathResolver.resolve(fileName, bulkRules)?.path || '';
+const driveBulkFolder = document.getElementById('driveBulkFolder');
+
+// region: "Klasör Seç" ile eklenen dosyanın bulunduğu klasör; kurallardaki {BOLGE} için.
+function resolveDrivePath(fileName, region) {
+    return DrivePathResolver.resolve(fileName, bulkRules, { region })?.path || '';
 }
 
-driveBulkFiles.addEventListener('change', () => {
-    const files = Array.from(driveBulkFiles.files || []);
+// Klasör seçiminde dosyanın bir üstündeki klasör bölgedir: "Bireysel ve Karma Şubeler/Akdeniz/X.pdf" → "Akdeniz".
+// Doğrudan bölge klasörü seçildiyse ("Akdeniz/X.pdf") yine "Akdeniz" olur.
+function regionFromRelativePath(relativePath) {
+    const parts = (relativePath || '').split('/').filter(Boolean);
+    return parts.length >= 2 ? parts[parts.length - 2] : '';
+}
+
+function addBulkFiles(files, fromFolder) {
+    let skipped = 0;
     files.forEach(file => {
         if (!/\.pdf$/i.test(file.name)) {
-            showToast(`"${file.name}" bir PDF dosyası değil, atlandı.`, 'warning');
+            // Klasör seçiminde PDF olmayan dosyalar (ör. Thumbs.db) sessizce atlanır
+            if (fromFolder) skipped++;
+            else showToast(`"${file.name}" bir PDF dosyası değil, atlandı.`, 'warning');
             return;
         }
-        const path = resolveDrivePath(file.name);
+        const region = fromFolder ? regionFromRelativePath(file.webkitRelativePath) : '';
+        const path = resolveDrivePath(file.name, region);
         bulkItems.push({
             file,
             fileName: file.name,
+            region,
             path,
             isMerged: !!path, // dosya adı bölge/yıl/çeyrek desenine uyuyorsa muhtemelen birleştirilmiş rapordur
             status: null,
             message: ''
         });
     });
-    driveBulkFiles.value = '';
+    if (fromFolder) {
+        const added = files.length - skipped;
+        showToast(`${added} PDF eklendi${skipped ? `, ${skipped} PDF olmayan dosya atlandı` : ''}.`, added ? 'success' : 'warning');
+    }
     renderBulkTable();
+}
+
+driveBulkFiles.addEventListener('change', () => {
+    addBulkFiles(Array.from(driveBulkFiles.files || []), false);
+    driveBulkFiles.value = '';
+});
+
+driveBulkFolder.addEventListener('change', () => {
+    addBulkFiles(Array.from(driveBulkFolder.files || []), true);
+    driveBulkFolder.value = '';
 });
 
 driveBulkSelectAllMerged.addEventListener('change', () => {
@@ -137,6 +164,12 @@ function renderBulkTable() {
 
         const nameTd = document.createElement('td');
         nameTd.textContent = item.fileName;
+        if (item.region) {
+            const regionDiv = document.createElement('div');
+            regionDiv.className = 'small text-muted';
+            regionDiv.textContent = `Klasör: ${item.region}`;
+            nameTd.appendChild(regionDiv);
+        }
         tr.appendChild(nameTd);
 
         const pathTd = document.createElement('td');

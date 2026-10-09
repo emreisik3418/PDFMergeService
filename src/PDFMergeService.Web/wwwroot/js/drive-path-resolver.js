@@ -67,13 +67,46 @@ const DrivePathResolver = (() => {
         };
     }
 
-    const cleanName = text => text.replace(/^[\d\s\-–—.]+/, '').replace(/\s+/g, ' ').trim();
 
-    // {YIL}/{CEYREK} içeren bir şablon, dosya adında yıl/çeyrek yoksa doldurulamaz (null).
+    const cleanName = text => text.replace(/^[\d\s\-–—.]+/, '').replace(/\s+/g, ' ').trim();
+    const upperTr = text => text.toLocaleUpperCase('tr-TR');
+
+    // ── Dönem: "2026 - 3. Çeyrek" ya da "2026 - Ağustos" ───────────────────────
+    const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    const LETTER = 'A-Za-zÇĞİÖŞÜçğıöşü';
+    const PERIOD_REGEX = new RegExp(
+        `(20\\d{2})\\s*[-–—]?\\s*(?:(\\d)\\s*\\.?\\s*${literalPattern('Çeyrek')}|(${MONTHS.map(literalPattern).join('|')})(?![${LETTER}]))`,
+        'i');
+
+    // { year, quarter, month, label, match }. label normalize edilmiş dönemdir: "2026 - 3. Çeyrek" / "2026 - Ağustos".
+    // match: metinde dönemin geçtiği kısım (yalnızca "yıl + çeyrek/ay" bitişik yazıldıysa dolu).
+    function parsePeriod(text) {
+        const source = text || '';
+        const m = source.match(PERIOD_REGEX);
+        if (m) {
+            if (m[2]) return { year: m[1], quarter: m[2], month: '', label: `${m[1]} - ${m[2]}. Çeyrek`, match: m[0] };
+            const month = MONTHS.find(name => upperTr(name) === upperTr(m[3])) || m[3];
+            return { year: m[1], quarter: '', month, label: `${m[1]} - ${month}`, match: m[0] };
+        }
+        // Eski dosya adları: yıl ve çeyrek ayrı yerlerde ("ANKARA 2026 RAPORU 1. Çeyrek")
+        const year = source.match(/\b(20\d{2})\b/)?.[1] || '';
+        const quarter = source.match(/(\d)\s*\.?\s*[Çç]eyrek/)?.[1] || '';
+        return { year, quarter, month: '', label: year && quarter ? `${year} - ${quarter}. Çeyrek` : '', match: '' };
+    }
+
+    // {YIL}/{CEYREK}/{DONEM} içeren şablon, dosya adında karşılığı yoksa doldurulamaz (null).
+    // {CEYREK} aylık dosyada boş olduğundan çeyreklik kurallar aylık dosyalara uygulanmaz.
     function fillPeriod(template, period) {
         if (/\{YIL\}/.test(template) && !period.year) return null;
         if (/\{CEYREK\}/.test(template) && !period.quarter) return null;
-        return template.replaceAll('{YIL}', period.year).replaceAll('{CEYREK}', period.quarter);
+        if (/\{DONEM\}/.test(template) && !period.label) return null;
+        return template.replaceAll('{YIL}', period.year).replaceAll('{CEYREK}', period.quarter).replaceAll('{DONEM}', period.label);
+    }
+
+    // {BOLGE}: toplu yüklemede klasör seçilince dosyanın bulunduğu alt klasör (ör. "Akdeniz" → "AKDENİZ").
+    function fillRegion(template, region) {
+        if (!template.includes('{BOLGE}')) return template;
+        return region ? template.replaceAll('{BOLGE}', upperTr(region.trim())) : null;
     }
 
     const joinPath = (...parts) => '/' + parts
@@ -84,12 +117,11 @@ const DrivePathResolver = (() => {
     // Eşleşme yoksa null döner; varsa { path, label } (label: hangi eşleştirme/kural kullanıldı).
     // Birden fazla aday eşleşirse sabit metni en uzun olan kazanır
     // (ör. "ÖZEL BANKACILIK BÖLGE MÜDÜRLÜĞÜ" içinde "ÖZEL" yerine "BÖLGE MÜDÜRLÜĞÜ").
-    function resolve(fileName, compiled) {
+    // context.region: dosyanın seçilen klasördeki bölge klasörü ({BOLGE} için).
+    function resolve(fileName, compiled, context) {
         const base = fileName.replace(/\.pdf$/i, '');
-        const period = {
-            year: base.match(/\b(20\d{2})\b/)?.[1] || '',
-            quarter: base.match(/(\d)\s*\.?\s*[Çç]eyrek/)?.[1] || ''
-        };
+        const period = parsePeriod(base);
+        const region = context?.region || '';
 
         let bestOverride = null;
         for (const candidate of compiled.overrides || []) {
@@ -108,14 +140,15 @@ const DrivePathResolver = (() => {
             const match = base.match(candidate.regex);
             if (!match) continue;
             const periodFolder = fillPeriod(candidate.rule.periodFolderFormat || '', period);
-            if (periodFolder === null) continue;
-            if (!best || candidate.specificity > best.specificity) best = { ...candidate, match, periodFolder };
+            const rootPath = fillRegion(candidate.rule.rootPath || '', region);
+            const folderTemplate = fillRegion((candidate.rule.folderSuffix || '').trim(), region);
+            if (periodFolder === null || rootPath === null || folderTemplate === null) continue;
+            if (!best || candidate.specificity > best.specificity) best = { ...candidate, match, periodFolder, rootPath, folderTemplate };
         }
         if (!best) return null;
 
-        const { rule, match, named, periodFolder } = best;
+        const { rule, match, named, periodFolder, rootPath, folderTemplate } = best;
         const name = cleanName(match[1]);
-        const folderTemplate = (rule.folderSuffix || '').trim();
 
         let regionFolder;
         if (folderTemplate.includes(NAME_TOKEN)) regionFolder = folderTemplate.replaceAll(NAME_TOKEN, name);
@@ -124,33 +157,33 @@ const DrivePathResolver = (() => {
         else regionFolder = name ? `${name} ${match[2]}` : match[2];
 
         return {
-            path: joinPath(rule.rootPath, regionFolder, periodFolder),
+            path: joinPath(rootPath, regionFolder, periodFolder),
             label: `Kural: ${rule.fileSuffix}`
         };
     }
 
     // ── Klasör Birleştirme için dosya adı önerisi ──────────────────────────────
-    // Kuralları tersinden kullanır: ana klasör adındaki rapor tipine uyan kuralın kalıbıyla, toplu
-    // yüklemenin tanıyacağı adı üretir. Böylece birleştirilen dosya sonra Drive'a yüklenirken aynı
-    // kuralla doğru klasöre gider.
-    //   ana klasör "Kurumsal Şubeler 2026 - 3. Çeyrek", alt klasör "Başkent Kurumsal"
-    //     → "BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek"   (kural: "KURUMSAL ŞUBESİ")
-    //   ana klasör "Özel Şubeler 2026 - 1. Çeyrek", alt klasör "B.Bağdat Caddesi"
-    //     → "ÖZEL B.BAĞDAT CADDESİ ŞUBESİ 2026 - 1. Çeyrek" (kural: "ÖZEL {AD} ŞUBESİ")
+    // Kuralları tersinden kullanır: yoldaki rapor tipine uyan kuralın kalıbıyla, toplu yüklemenin
+    // tanıyacağı adı üretir. Böylece birleştirilen dosya sonra Drive'a yüklenirken aynı kuralla doğru
+    // klasöre gider.
+    //   "Kurumsal Şubeler 2026 - 3. Çeyrek" › "Başkent Kurumsal"
+    //     → "BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek"                       (kural: "KURUMSAL ŞUBESİ")
+    //   "Bireysel ve Karma Şubeler" › "Akdeniz" › "Akdeniz Bulvarı Antalya" › "2026 - Ağustos"
+    //     → "AKDENİZ BULVARI ANTALYA ŞUBESİ 2026 - Ağustos", ZIP klasörü "Akdeniz"  (kural: "{AD} ŞUBESİ")
 
-    const PERIOD_REGEX = /(20\d{2})\s*[-–—]?\s*(\d)\s*\.?\s*[Çç]eyrek/;
-    const upperTr = text => text.toLocaleUpperCase('tr-TR');
     const words = text => upperTr(text).split(/\s+/).filter(Boolean);
     // Tekil/çoğul farkını tolere etmek için kelimenin ilk 4 harfi: ŞUBESİ / ŞUBELER → ŞUBE, MÜDÜRLÜĞÜ / MÜDÜRLÜKLERİ → MÜDÜ
     const stem = word => word.slice(0, 4);
-    const lastSegment = path => (path || '').trim().replace(/[\\/]+$/, '').split(/[\\/]/).pop() || '';
+    const splitPath = path => (path || '').trim().split(/[\\/]+/).filter(Boolean);
+    const lastSegment = path => splitPath(path).pop() || '';
+    const trimSeparators = text => text.replace(/^[\s\-–—_]+|[\s\-–—_]+$/g, '').replace(/\s+/g, ' ').trim();
 
-    function parseRootFolder(rootFolderName) {
-        const match = rootFolderName.match(PERIOD_REGEX);
-        return {
-            period: match ? `${match[1]} - ${match[2]}. Çeyrek` : '',
-            type: (match ? rootFolderName.replace(match[0], ' ') : rootFolderName).replace(/[\s\-–—_]+$/, '').replace(/^[\s\-–—_]+/, '').trim()
-        };
+    // Klasör adından dönemi ayırır: "Kurumsal Şubeler 2026 - 3. Çeyrek" → { period: "2026 - 3. Çeyrek", rest: "Kurumsal Şubeler" }
+    function splitSegment(segment) {
+        const p = parsePeriod(segment);
+        return p.match
+            ? { period: p.label, rest: trimSeparators(segment.replace(p.match, ' ')) }
+            : { period: '', rest: trimSeparators(segment) };
     }
 
     // Rapor tipine uyan kural: önce Ana Klasör'ün son parçası ya da Klasör Adı birebir, sonra kalıptaki
@@ -166,7 +199,7 @@ const DrivePathResolver = (() => {
             const literalWords = words(pattern.replace(NAME_TOKEN, ' '));
             if (literalWords.length === 0) continue;
 
-            const exact = [lastSegment(rule.rootPath), (rule.folderSuffix || '').replace(NAME_TOKEN, ' ')]
+            const exact = [lastSegment((rule.rootPath || '').replaceAll('{BOLGE}', '')), (rule.folderSuffix || '').replace(NAME_TOKEN, ' ')]
                 .some(candidate => candidate.trim() && words(candidate).join(' ') === typeKey);
             const stemMatch = literalWords.every(w => typeStems.has(stem(w)));
             if (!exact && !stemMatch) continue;
@@ -190,24 +223,52 @@ const DrivePathResolver = (() => {
         return result;
     }
 
-    function suggestMergedFileName(subfolderName, rootPath, rules) {
-        const { period, type } = parseRootFolder(lastSegment(rootPath));
-        const sub = subfolderName.trim();
-        const withPeriod = name => period && !PERIOD_REGEX.test(name) ? `${name} ${period}` : name;
+    // relativePath: taranan ana klasöre göre birleştirilecek klasörün yolu ("Akdeniz/Akdeniz Bulvarı Antalya/2026 - Ağustos").
+    // Dönüş: { fileName, directory, period } — directory ZIP içindeki klasördür ("Akdeniz"; tek seviyede boş).
+    function suggestMergedFileName(relativePath, rootPath, rules) {
+        const rootSegments = splitPath(rootPath);
+        const segments = [...rootSegments, ...splitPath(relativePath)].map(splitSegment);
+        const relStart = rootSegments.length;
 
-        const rule = findRuleForType(type, rules);
-        if (!rule) return withPeriod(sub);
+        // Dönem: yoldaki en derin dönem bilgisi (Bireysel: dönem klasörü; Kurumsal: ana klasör adı)
+        const period = [...segments].reverse().find(s => s.period)?.period || '';
+
+        // Ad: taranan kökün altındaki, dönemden arındırılınca boş kalmayan en derin klasör
+        let nameIdx = -1;
+        for (let i = segments.length - 1; i >= relStart; i--) {
+            if (segments[i].rest) { nameIdx = i; break; }
+        }
+        const withPeriod = name => (period ? `${name} ${period}` : name).trim();
+        if (nameIdx < 0) return { fileName: withPeriod(lastSegment(relativePath)), directory: '', period };
+
+        // Rapor tipi: ad klasörünün üstündeki, bir kurala uyan en yakın klasör ("Bireysel ve Karma Şubeler")
+        let rule = null, typeIdx = -1;
+        for (let i = nameIdx - 1; i >= 0 && !rule; i--) {
+            rule = findRuleForType(segments[i].rest, rules);
+            if (rule) typeIdx = i;
+        }
+
+        // ZIP klasörü: rapor tipi ile ad arasındaki klasörler (bölge); kural yoksa taranan kökün altındakiler
+        const directory = segments
+            .slice(rule ? typeIdx + 1 : relStart, nameIdx)
+            .map(s => s.rest)
+            .filter(Boolean)
+            .join('/');
+
+        const sub = segments[nameIdx].rest;
+        if (!rule) return { fileName: withPeriod(sub), directory, period };
 
         const pattern = rule.fileSuffix.trim();
-        const at = pattern.includes(NAME_TOKEN) ? pattern.indexOf(NAME_TOKEN) : 0;
-        const before = pattern.includes(NAME_TOKEN) ? pattern.slice(0, at) : '';
-        const after = pattern.includes(NAME_TOKEN) ? pattern.slice(at + NAME_TOKEN.length) : pattern;
+        const hasName = pattern.includes(NAME_TOKEN);
+        const at = hasName ? pattern.indexOf(NAME_TOKEN) : 0;
+        const before = hasName ? pattern.slice(0, at) : '';
+        const after = hasName ? pattern.slice(at + NAME_TOKEN.length) : pattern;
 
-        const name = trimOverlap(words(sub.replace(PERIOD_REGEX, ' ')), words(before), words(after));
-        if (name.length === 0) return withPeriod(sub);
+        const name = trimOverlap(words(sub), words(before), words(after));
+        if (name.length === 0) return { fileName: withPeriod(sub), directory, period };
 
-        return withPeriod([...words(before), ...name, ...words(after)].join(' '));
+        return { fileName: withPeriod([...words(before), ...name, ...words(after)].join(' ')), directory, period };
     }
 
-    return { compile, resolve, suggestMergedFileName };
+    return { compile, resolve, parsePeriod, suggestMergedFileName };
 })();

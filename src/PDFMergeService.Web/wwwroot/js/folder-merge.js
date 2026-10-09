@@ -1,7 +1,7 @@
 'use strict';
 
 // ─── State ───────────────────────────────────────────────────────────────────
-let scannedFolders = [];   // { folderName, folderPath, pdfFiles[], outputName }
+let scannedFolders = [];   // { folderName, folderPath, relativePath, pdfFiles[], outputName, outputDirectory, period }
 let scannedRootPath = '';
 
 // Windows dosya adında kullanılamayan karakterler.
@@ -14,12 +14,24 @@ function zipFileName() {
     return `${rootName && !/^[A-Za-z]:$/.test(rootName) ? rootName : 'TopluBirlestirme'}.zip`;
 }
 
-// Varsayılan ad, ana klasördeki rapor tipi ve dönemden Drive toplu yükleme kurallarının tersiyle önerilir:
-// "Kurumsal Şubeler 2026 - 3. Çeyrek" › "Başkent Kurumsal" → "BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek".
-// Uyan kural yoksa klasör adı (+ ana klasörde dönem varsa dönem).
-const defaultOutputName = (folder, rootPath) => typeof DrivePathResolver !== 'undefined'
-    ? DrivePathResolver.suggestMergedFileName(folder.folderName, rootPath, window.driveBulkUploadRules || [])
-    : folder.folderName;
+// Varsayılan ad ve ZIP klasörü, yoldaki rapor tipi ve dönemden Drive toplu yükleme kurallarının tersiyle önerilir:
+//   "Kurumsal Şubeler 2026 - 3. Çeyrek" › "Başkent Kurumsal" → "BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek"
+//   "Bireysel ve Karma Şubeler" › "Akdeniz" › "Akdeniz Bulvarı Antalya" › "2026 - Ağustos"
+//     → "Akdeniz/AKDENİZ BULVARI ANTALYA ŞUBESİ 2026 - Ağustos"
+// Uyan kural yoksa klasör adı (+ dönem).
+function suggestOutput(folder, rootPath) {
+    const relativePath = folder.relativePath || folder.folderName;
+    if (typeof DrivePathResolver === 'undefined') return { fileName: folder.folderName, directory: '', period: '' };
+    return DrivePathResolver.suggestMergedFileName(relativePath, rootPath, window.driveBulkUploadRules || []);
+}
+
+// Satır birleştirmeye dahil mi: işaretli ve dönem filtresinde görünüyor.
+function isActive(i) {
+    const row = folderList.querySelector(`tr[data-idx="${i}"]`);
+    return !!row && !row.classList.contains('d-none') && row.querySelector('.folder-check').checked;
+}
+
+const visibleChecks = () => [...folderList.querySelectorAll('tr:not(.d-none) .folder-check')];
 
 // ─── DOM Refs ─────────────────────────────────────────────────────────────────
 const rootPathInput      = document.getElementById('rootPath');
@@ -39,6 +51,8 @@ const mergeProgress      = document.getElementById('mergeProgress');
 const mergeProgressBar   = document.getElementById('mergeProgressBar');
 const mergeProgressLabel = document.getElementById('mergeProgressLabel');
 const mergeProgressPercent = document.getElementById('mergeProgressPercent');
+const periodFilterWrap   = document.getElementById('periodFilterWrap');
+const periodFilter       = document.getElementById('periodFilter');
 
 // ─── Scan ─────────────────────────────────────────────────────────────────────
 scanBtn.addEventListener('click', scanFolders);
@@ -66,7 +80,10 @@ async function scanFolders() {
         }
 
         scannedRootPath = path;
-        scannedFolders = (await res.json()).map(f => ({ ...f, outputName: defaultOutputName(f, path) }));
+        scannedFolders = (await res.json()).map(f => {
+            const suggestion = suggestOutput(f, path);
+            return { ...f, outputName: suggestion.fileName, outputDirectory: suggestion.directory, period: suggestion.period };
+        });
 
         if (scannedFolders.length === 0) {
             emptyState.classList.remove('d-none');
@@ -101,11 +118,15 @@ function renderFolderList() {
     scannedFolders.forEach((folder, idx) => {
         totalPdf += folder.pdfCount;
 
-        // Table row
+        // Table row: derin yapıda üst klasörler küçük ve soluk, birleştirilecek klasör kalın gösterilir
+        const parents = (folder.relativePath || folder.folderName).split('/').slice(0, -1);
         const tr = document.createElement('tr');
+        tr.dataset.idx = idx;
+        tr.dataset.period = folder.period || '';
         tr.innerHTML = `
             <td class="text-center text-muted">${idx + 1}</td>
             <td>
+                ${parents.length ? `<div class="small text-muted text-truncate" style="max-width: 240px;" title="${escHtml(parents.join(' › '))}">${escHtml(parents.join(' › '))} ›</div>` : ''}
                 <i class="bi bi-folder-fill text-warning me-2"></i>
                 <button class="btn btn-link btn-sm p-0 text-dark fw-medium text-decoration-none"
                         data-bs-toggle="collapse" data-bs-target="#preview_${idx}">
@@ -118,6 +139,7 @@ function renderFolderList() {
                            value="${escHtml(folder.outputName)}" title="${escHtml(folder.outputName)}" aria-label="Birleştirilmiş dosya adı" />
                     <span class="input-group-text">.pdf</span>
                 </div>
+                ${folder.outputDirectory ? `<div class="small text-muted mt-1"><i class="bi bi-file-zip me-1"></i>ZIP içinde: ${escHtml(folder.outputDirectory)}/</div>` : ''}
             </td>
             <td class="text-center">
                 <span class="badge bg-secondary">${folder.pdfCount}</span>
@@ -150,6 +172,8 @@ function renderFolderList() {
     totalPdfBadge.textContent = `Toplam ${totalPdf} PDF`;
     mergeAllBtn.disabled = false;
 
+    renderPeriodFilter();
+
     // checkbox events
     document.querySelectorAll('.folder-check').forEach(cb => {
         cb.addEventListener('change', () => { updateSelectAll(); validateOutputNames(); });
@@ -164,9 +188,53 @@ function renderFolderList() {
     });
 }
 
-// Seçili klasörlerin çıktı adlarını denetler, hatalı alanları işaretler; ilk hatanın mesajını döner.
+// ─── Dönem filtresi ───────────────────────────────────────────────────────────
+// Birden fazla dönem bulunduysa (ör. şube klasörlerinde 2026 - 3. Çeyrek, 2026 - Ağustos) listelenir;
+// seçilen dönemin klasörleri gösterilip işaretlenir. Varsayılan: en güncel dönem.
+const PERIOD_MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+// Sıralama anahtarı: yıl, sonra dönemin yıl içindeki ayı (çeyrek = son ayı) — en günceli en üstte göstermek için
+function periodSortKey(label) {
+    const p = DrivePathResolver.parsePeriod(label);
+    const month = p.quarter ? Number(p.quarter) * 3 : PERIOD_MONTHS.indexOf(p.month) + 1;
+    return Number(p.year) * 100 + month + (p.quarter ? 0.5 : 0);
+}
+
+function renderPeriodFilter() {
+    const periods = [...new Set(scannedFolders.map(f => f.period).filter(Boolean))];
+    if (periods.length < 2 || typeof DrivePathResolver === 'undefined') {
+        periodFilterWrap.classList.add('d-none');
+        periodFilter.innerHTML = '';
+        return;
+    }
+
+    periods.sort((a, b) => periodSortKey(b) - periodSortKey(a));
+    periodFilter.innerHTML = '<option value="">Tüm dönemler</option>' + periods
+        .map(p => `<option value="${escHtml(p)}">${escHtml(p)} (${scannedFolders.filter(f => f.period === p).length})</option>`)
+        .join('');
+    periodFilter.value = periods[0];
+    periodFilterWrap.classList.remove('d-none');
+    applyPeriodFilter();
+}
+
+function applyPeriodFilter() {
+    const selected = periodFilter.value;
+    let number = 0;
+    folderList.querySelectorAll('tr[data-idx]').forEach(row => {
+        const visible = !selected || row.dataset.period === selected;
+        row.classList.toggle('d-none', !visible);
+        row.querySelector('.folder-check').checked = visible;
+        if (visible) row.cells[0].textContent = ++number;
+    });
+    updateSelectAll();
+    validateOutputNames();
+}
+
+periodFilter?.addEventListener('change', applyPeriodFilter);
+
+// Birleştirmeye dahil klasörlerin çıktı adlarını denetler, hatalı alanları işaretler; ilk hatanın mesajını döner.
+// Aynı ad yalnızca aynı ZIP klasöründe çakışma sayılır (farklı bölgelerde aynı ad olabilir).
 function validateOutputNames() {
-    const checks = [...document.querySelectorAll('.folder-check')];
     const inputs = [...document.querySelectorAll('.output-name')];
     const seen = new Map();
     let firstError = null;
@@ -174,16 +242,16 @@ function validateOutputNames() {
     inputs.forEach(input => input.classList.remove('is-invalid'));
 
     scannedFolders.forEach((folder, i) => {
-        if (!checks[i]?.checked) return;
+        if (!isActive(i)) return;
         const name = folder.outputName.trim().replace(/\.pdf$/i, '');
         let error = null;
 
-        if (!name) error = `"${folder.folderName}" için dosya adı boş.`;
+        if (!name) error = `"${folder.relativePath || folder.folderName}" için dosya adı boş.`;
         else if (INVALID_FILENAME_CHARS.test(name)) error = `"${name}" dosya adında \\ / : * ? " < > | karakterleri kullanılamaz.`;
         else {
-            const key = name.toLocaleUpperCase('tr-TR');
+            const key = `${folder.outputDirectory || ''}/${name}`.toLocaleUpperCase('tr-TR');
             if (seen.has(key)) {
-                error = `"${name}" adı birden fazla klasörde kullanılmış.`;
+                error = `"${name}" adı ${folder.outputDirectory ? `"${folder.outputDirectory}" klasöründe ` : ''}birden fazla kez kullanılmış.`;
                 inputs[seen.get(key)].classList.add('is-invalid');
             } else {
                 seen.set(key, i);
@@ -199,29 +267,27 @@ function validateOutputNames() {
     return firstError;
 }
 
-// ─── Select All ───────────────────────────────────────────────────────────────
+// ─── Select All (yalnızca filtrede görünen satırlar) ─────────────────────────
 selectAll.addEventListener('change', () => {
-    document.querySelectorAll('.folder-check').forEach(cb => cb.checked = selectAll.checked);
+    visibleChecks().forEach(cb => cb.checked = selectAll.checked);
     updateMergeBtn();
     validateOutputNames();
 });
 
 function updateSelectAll() {
-    const checks = [...document.querySelectorAll('.folder-check')];
-    selectAll.checked = checks.every(c => c.checked);
+    const checks = visibleChecks();
+    selectAll.checked = checks.length > 0 && checks.every(c => c.checked);
     selectAll.indeterminate = checks.some(c => c.checked) && !checks.every(c => c.checked);
     updateMergeBtn();
 }
 
 function updateMergeBtn() {
-    const anyChecked = [...document.querySelectorAll('.folder-check')].some(c => c.checked);
-    mergeAllBtn.disabled = !anyChecked;
+    mergeAllBtn.disabled = !visibleChecks().some(c => c.checked);
 }
 
 // ─── Merge All ────────────────────────────────────────────────────────────────
 mergeAllBtn.addEventListener('click', async () => {
-    const checks = [...document.querySelectorAll('.folder-check')];
-    const selected = scannedFolders.filter((_, i) => checks[i]?.checked);
+    const selected = scannedFolders.filter((_, i) => isActive(i));
 
     if (selected.length === 0) { showToast('En az bir klasör seçin.', 'warning'); return; }
 
@@ -236,7 +302,8 @@ mergeAllBtn.addEventListener('click', async () => {
             folderName: f.folderName,
             folderPath: f.folderPath,
             pdfFiles: f.pdfFiles,
-            outputFileName: f.outputName.trim().replace(/\.pdf$/i, '')
+            outputFileName: f.outputName.trim().replace(/\.pdf$/i, ''),
+            outputDirectory: f.outputDirectory || ''
         })),
         footer: collectFooterSettings()
     };

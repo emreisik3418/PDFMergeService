@@ -63,6 +63,14 @@
                         <span id="totalPdfBadge" class="text-muted small"></span>
                     </div>
 
+                    <div id="periodFilterWrap" class="d-none mb-2">
+                        <div class="form-floating" style="max-width: 20rem;">
+                            <select id="periodFilter" class="form-select"></select>
+                            <label for="periodFilter">Dönem</label>
+                        </div>
+                        <div class="form-text">Yalnızca seçilen döneme ait klasörler listelenir ve birleştirilir.</div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
@@ -83,7 +91,9 @@
                         Her klasör, yanındaki adla ayrı bir PDF olarak birleştirilip ZIP'e eklenir. Ad, ana klasördeki rapor tipi
                         ve dönemden önerilir (ör. <code>Kurumsal Şubeler 2026 - 3. Çeyrek</code> › <code>Başkent Kurumsal</code> →
                         <code>BAŞKENT KURUMSAL ŞUBESİ 2026 - 3. Çeyrek</code>); böylece dosya Drive'a toplu yüklenirken de
-                        doğru klasöre gider. Adları birleştirmeden önce değiştirebilirsiniz; <code>.pdf</code> otomatik eklenir.
+                        doğru klasöre gider. Alt alta klasörlerde (Bölge › Şube › Dönem) her dönem klasörü ayrı birleştirilir,
+                        ad dönem klasöründen alınır (<code>2026 - Ağustos</code> gibi aylar da tanınır) ve dosya ZIP'te bölge
+                        klasörüne konur. Adları birleştirmeden önce değiştirebilirsiniz; <code>.pdf</code> otomatik eklenir.
                     </div>
 
                     <!-- Dosya Detay Accordion -->
